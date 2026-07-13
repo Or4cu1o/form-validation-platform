@@ -1,0 +1,330 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum RoleName {
+  OBSERVADOR
+  ELABORADOR
+  REVISOR
+  APROVADOR
+  ADMINISTRADOR
+
+  @@map("role_name")
+}
+
+enum UnitLevel {
+  A
+  B
+  C
+
+  @@map("unit_level")
+}
+
+enum GoalOperator {
+  GTE
+  LTE
+  EQ
+  GT
+  LT
+
+  @@map("goal_operator")
+}
+
+// Status do ciclo de vida do ReportInstance (Secao 4 do PROMPT.md)
+enum ReportStatus {
+  PENDENTE
+  EM_REVISAO
+  PENDENTE_APROVACAO
+  CONCLUIDO
+
+  @@map("report_status")
+}
+
+// Flags de validacao por indicador (Mesa de Validacao Tecnica / exportacao)
+enum IndicatorValidationStatus {
+  EM_REVISAO
+  PENDENTE_VALIDACAO
+  APROVADO
+  REPROVADO
+
+  @@map("indicator_validation_status")
+}
+
+enum ValidationVerdict {
+  APROVADO
+  REPROVADO
+
+  @@map("validation_verdict")
+}
+
+enum AuditAction {
+  INSERT
+  UPDATE
+
+  @@map("audit_action")
+}
+
+// ---------------------------------------------------------------------------
+// RBAC / Identidade e Unidades (Secao 3)
+// ---------------------------------------------------------------------------
+
+model Unit {
+  id             String    @id @default(uuid())
+  sigla          String    @unique
+  nome           String
+  logoUrl        String?   @map("logo_url")
+  level          UnitLevel
+  formTemplateId String?   @map("form_template_id")
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  formTemplate    FormTemplate?    @relation(fields: [formTemplateId], references: [id])
+  primaryUsers    User[]           @relation("PrimaryUnit")
+  unitAccesses    UserUnitAccess[]
+  reportInstances ReportInstance[]
+
+  @@map("units")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  matricula     String   @unique
+  nome          String
+  sobrenome     String
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  role          RoleName
+  primaryUnitId String   @map("primary_unit_id")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  primaryUnit       Unit                @relation("PrimaryUnit", fields: [primaryUnitId], references: [id])
+  unitAccesses      UserUnitAccess[]
+  updatedResponses  IndicatorResponse[] @relation("ResponseUpdatedBy")
+  uploadedEvidences EvidenceFile[]      @relation("EvidenceUploadedBy")
+  validationRecords ValidationRecord[]  @relation("ValidationByAprovador")
+  auditLogs         AuditLog[]          @relation("AuditActor")
+
+  @@map("users")
+}
+
+// Unidades adicionais que um usuario pode enxergar em modo leitura
+// (ex.: Observador com acesso a filiais explicitamente permitidas),
+// alem da sua Unit primaria.
+model UserUnitAccess {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  unitId    String   @map("unit_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+  unit Unit @relation(fields: [unitId], references: [id])
+
+  @@unique([userId, unitId])
+  @@map("user_unit_access")
+}
+
+// ---------------------------------------------------------------------------
+// Engine No-Code de Formularios (Secao 5 — Governanca de Estrutura)
+// ---------------------------------------------------------------------------
+
+model FormTemplate {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  topics          FormTopic[]
+  units           Unit[]
+  reportInstances ReportInstance[]
+
+  @@map("form_templates")
+}
+
+model FormTopic {
+  id             String   @id @default(uuid())
+  formTemplateId String   @map("form_template_id")
+  title          String
+  order          Int      @default(0)
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  formTemplate FormTemplate    @relation(fields: [formTemplateId], references: [id])
+  indicators   FormIndicator[]
+
+  @@map("form_topics")
+}
+
+// Definicao de metadados de um indicador. Alteracoes aqui valem para
+// relatorios futuros; relatorios ja instanciados preservam o snapshot
+// gravado em IndicatorResponse (nao sao alterados retroativamente).
+model FormIndicator {
+  id                String       @id @default(uuid())
+  formTopicId       String       @map("form_topic_id")
+  title             String
+  objective         String
+  variableKeys      String[]     @map("variable_keys")
+  formulaExpression String       @map("formula_expression")
+  goalOperator      GoalOperator @map("goal_operator")
+  goalValue         Decimal      @map("goal_value") @db.Decimal(18, 4)
+  isResidentState   Boolean      @default(false) @map("is_resident_state")
+  order             Int          @default(0)
+  isActive          Boolean      @default(true) @map("is_active")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  formTopic          FormTopic           @relation(fields: [formTopicId], references: [id])
+  indicatorResponses IndicatorResponse[]
+
+  @@map("form_indicators")
+}
+
+// ---------------------------------------------------------------------------
+// Ciclo de vida do relatorio (Secao 4) e respostas (Secao 2 — Estado Residente)
+// ---------------------------------------------------------------------------
+
+model ReportInstance {
+  id                     String       @id @default(uuid())
+  unitId                 String       @map("unit_id")
+  formTemplateId         String       @map("form_template_id")
+  referenceMonth         DateTime     @map("reference_month") @db.Date
+  status                 ReportStatus @default(PENDENTE)
+  elaborationDueDate     DateTime     @map("elaboration_due_date") @db.Date
+  reviewDueDate          DateTime     @map("review_due_date") @db.Date
+  approvalDueDate        DateTime     @map("approval_due_date") @db.Date
+  reprovalCount          Int          @default(0) @map("reproval_count")
+  slaExtensionDueDate    DateTime?    @map("sla_extension_due_date") @db.Date
+  submittedForReviewAt   DateTime?    @map("submitted_for_review_at")
+  submittedForApprovalAt DateTime?    @map("submitted_for_approval_at")
+  concludedAt            DateTime?    @map("concluded_at")
+  createdAt              DateTime     @default(now()) @map("created_at")
+  updatedAt              DateTime     @updatedAt @map("updated_at")
+
+  unit               Unit                @relation(fields: [unitId], references: [id])
+  formTemplate       FormTemplate        @relation(fields: [formTemplateId], references: [id])
+  indicatorResponses IndicatorResponse[]
+
+  @@unique([unitId, referenceMonth])
+  @@map("report_instances")
+}
+
+// Snapshot do indicador no momento da instanciacao do relatorio, para que
+// edicoes futuras no FormIndicator (formula/meta) nao alterem retroativamente
+// relatorios ja emitidos.
+model IndicatorResponse {
+  id               String @id @default(uuid())
+  reportInstanceId String @map("report_instance_id")
+  formIndicatorId  String @map("form_indicator_id")
+
+  snapshotTitle             String       @map("snapshot_title")
+  snapshotObjective         String       @map("snapshot_objective")
+  snapshotVariableKeys      String[]     @map("snapshot_variable_keys")
+  snapshotFormulaExpression String       @map("snapshot_formula_expression")
+  snapshotGoalOperator      GoalOperator @map("snapshot_goal_operator")
+  snapshotGoalValue         Decimal      @map("snapshot_goal_value") @db.Decimal(18, 4)
+
+  variableValues       Json     @default("{}") @map("variable_values")
+  calculatedValue      Decimal? @map("calculated_value") @db.Decimal(18, 4)
+  isCompliant          Boolean? @map("is_compliant")
+  isClonedFromResident Boolean  @default(false) @map("is_cloned_from_resident")
+
+  validationStatus IndicatorValidationStatus @default(EM_REVISAO) @map("validation_status")
+
+  updatedByUserId String?  @map("updated_by_user_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  reportInstance    ReportInstance     @relation(fields: [reportInstanceId], references: [id])
+  formIndicator     FormIndicator      @relation(fields: [formIndicatorId], references: [id])
+  updatedByUser     User?              @relation("ResponseUpdatedBy", fields: [updatedByUserId], references: [id])
+  evidenceFiles     EvidenceFile[]
+  validationRecords ValidationRecord[]
+
+  @@unique([reportInstanceId, formIndicatorId])
+  @@map("indicator_responses")
+}
+
+// ---------------------------------------------------------------------------
+// Evidencias e Mesa de Validacao Tecnica (Secao 5 — Aprovador)
+// ---------------------------------------------------------------------------
+
+model EvidenceFile {
+  id                  String   @id @default(uuid())
+  indicatorResponseId String?  @map("indicator_response_id")
+  validationRecordId  String?  @map("validation_record_id")
+  fileKey             String   @map("file_key")
+  fileName            String   @map("file_name")
+  mimeType            String   @map("mime_type")
+  sizeBytes           Int      @map("size_bytes")
+  uploadedByUserId    String   @map("uploaded_by_user_id")
+  isActive            Boolean  @default(true) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  indicatorResponse IndicatorResponse? @relation(fields: [indicatorResponseId], references: [id])
+  validationRecord  ValidationRecord?  @relation(fields: [validationRecordId], references: [id])
+  uploadedByUser    User               @relation("EvidenceUploadedBy", fields: [uploadedByUserId], references: [id])
+
+  @@map("evidence_files")
+}
+
+// Contraprova indicador-por-indicador feita pelo Aprovador da Matriz.
+model ValidationRecord {
+  id                  String            @id @default(uuid())
+  indicatorResponseId String            @map("indicator_response_id")
+  aprovadorUserId     String            @map("aprovador_user_id")
+  verdict             ValidationVerdict
+  justification       String
+  createdAt           DateTime          @default(now()) @map("created_at")
+
+  indicatorResponse IndicatorResponse @relation(fields: [indicatorResponseId], references: [id])
+  aprovadorUser     User              @relation("ValidationByAprovador", fields: [aprovadorUserId], references: [id])
+  evidenceFiles     EvidenceFile[]
+
+  @@map("validation_records")
+}
+
+// ---------------------------------------------------------------------------
+// Configuracao do Motor de Exportacao (Secao 6) — tabela singleton
+// ---------------------------------------------------------------------------
+
+model SystemSetting {
+  id                  String   @id @default(uuid())
+  exportNamingPattern String   @default("Relatorio Operacional de Tecnologia da Informacao - {SIGLA_UNIDADE} - {DATA_ISO}") @map("export_naming_pattern")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}
+
+// ---------------------------------------------------------------------------
+// Trilha de Auditoria (Secao 6) — populada via trigger de banco (imutavel)
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id            String      @id @default(uuid())
+  tableName     String      @map("table_name")
+  recordId      String      @map("record_id")
+  action        AuditAction
+  userId        String?     @map("user_id")
+  previousValue Json?       @map("previous_value")
+  newValue      Json?       @map("new_value")
+  changedAt     DateTime    @default(now()) @map("changed_at")
+
+  user User? @relation("AuditActor", fields: [userId], references: [id])
+
+  @@index([tableName, recordId])
+  @@map("audit_logs")
+}

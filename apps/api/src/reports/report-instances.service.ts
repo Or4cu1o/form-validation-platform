@@ -1,0 +1,136 @@
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { IndicatorValidationStatus, Prisma, ReportStatus, RoleName } from '@prisma/client';
+import { AuthenticatedUser } from '../auth/types/authenticated-user.interface';
+import { UnitAccessService } from '../common/services/unit-access.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { ListReportInstancesQueryDto } from './dto/list-report-instances-query.dto';
+
+@Injectable()
+export class ReportInstancesService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly unitAccessService: UnitAccessService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
+
+  // Painel Central (Secao 5 do PROMPT.md): filtros por unidade, periodo,
+  // status, busca global por sigla/nome da unidade, e ordenacao por
+  // periodo de referencia ou status.
+  async findAllForUser(user: AuthenticatedUser, query: ListReportInstancesQueryDto = {}) {
+    const scopeWhere: Prisma.ReportInstanceWhereInput = this.unitAccessService.hasOrgWideReadAccess(user)
+      ? {}
+      : { unitId: { in: await this.unitAccessService.getAccessibleUnitIds(user) } };
+
+    const { unitId, status, referenceMonthFrom, referenceMonthTo, search, sortBy, sortOrder } = query;
+    const where: Prisma.ReportInstanceWhereInput = {
+      ...scopeWhere,
+      ...(unitId && { unitId }),
+      ...(status && { status }),
+      ...((referenceMonthFrom || referenceMonthTo) && {
+        referenceMonth: {
+          ...(referenceMonthFrom && { gte: new Date(referenceMonthFrom) }),
+          ...(referenceMonthTo && { lte: new Date(referenceMonthTo) }),
+        },
+      }),
+      ...(search && {
+        unit: { OR: [{ sigla: { contains: search, mode: 'insensitive' } }, { nome: { contains: search, mode: 'insensitive' } }] },
+      }),
+    };
+
+    return this.prisma.reportInstance.findMany({
+      where,
+      include: { unit: true },
+      orderBy: { [sortBy ?? 'referenceMonth']: sortOrder ?? 'desc' },
+    });
+  }
+
+  async findOneForUser(id: string, user: AuthenticatedUser) {
+    const report = await this.prisma.reportInstance.findUnique({
+      where: { id },
+      include: {
+        unit: true,
+        indicatorResponses: {
+          include: {
+            evidenceFiles: { where: { isActive: true } },
+            validationRecords: { orderBy: { createdAt: 'asc' } },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+    if (!report) {
+      throw new NotFoundException('Relatorio nao encontrado');
+    }
+    await this.unitAccessService.assertReadAccess(report.unitId, user);
+    return report;
+  }
+
+  async submitForReview(id: string, user: AuthenticatedUser) {
+    const updated = await this.transition(
+      id,
+      user,
+      RoleName.ELABORADOR,
+      ReportStatus.PENDENTE,
+      ReportStatus.EM_REVISAO,
+      { submittedForReviewAt: new Date() },
+    );
+    await this.notificationsService.notifySubmittedForReview(updated, updated.unit);
+    return updated;
+  }
+
+  async submitForApproval(id: string, user: AuthenticatedUser) {
+    const report = await this.prisma.reportInstance.findUnique({ where: { id }, include: { unit: true } });
+    if (!report) {
+      throw new NotFoundException('Relatorio nao encontrado');
+    }
+    if (user.role !== RoleName.REVISOR || user.primaryUnitId !== report.unitId) {
+      throw new ForbiddenException('Usuario nao autorizado a executar esta transicao para este relatorio');
+    }
+    if (report.status !== ReportStatus.EM_REVISAO) {
+      throw new BadRequestException(
+        `Transicao invalida: relatorio esta em ${report.status}, esperado ${ReportStatus.EM_REVISAO}`,
+      );
+    }
+
+    const updated = await this.prisma.runWithAuditActor(user.id, async (tx) => {
+      await tx.indicatorResponse.updateMany({
+        where: { reportInstanceId: id },
+        data: { validationStatus: IndicatorValidationStatus.PENDENTE_VALIDACAO },
+      });
+      return tx.reportInstance.update({
+        where: { id },
+        data: { status: ReportStatus.PENDENTE_APROVACAO, submittedForApprovalAt: new Date() },
+      });
+    });
+    await this.notificationsService.notifySubmittedForApproval(updated, report.unit);
+    return updated;
+  }
+
+  private async transition(
+    id: string,
+    user: AuthenticatedUser,
+    requiredRole: RoleName,
+    expectedFrom: ReportStatus,
+    to: ReportStatus,
+    extraData: Record<string, unknown>,
+  ) {
+    const report = await this.prisma.reportInstance.findUnique({ where: { id } });
+    if (!report) {
+      throw new NotFoundException('Relatorio nao encontrado');
+    }
+    if (user.role !== requiredRole || user.primaryUnitId !== report.unitId) {
+      throw new ForbiddenException('Usuario nao autorizado a executar esta transicao para este relatorio');
+    }
+    if (report.status !== expectedFrom) {
+      throw new BadRequestException(
+        `Transicao invalida: relatorio esta em ${report.status}, esperado ${expectedFrom}`,
+      );
+    }
+    return this.prisma.reportInstance.update({
+      where: { id },
+      data: { status: to, ...extraData },
+      include: { unit: true },
+    });
+  }
+}

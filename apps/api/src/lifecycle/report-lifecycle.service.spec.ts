@@ -1,0 +1,129 @@
+import { GoalOperator, UnitLevel } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
+import { ReportLifecycleService } from './report-lifecycle.service';
+
+// Teste de integracao contra um Postgres real (nao mockado) — segue o
+// padrao ja usado no restante do projeto de validar contra o banco de
+// dev em vez de dublês, para pegar bugs reais de constraint/transacao.
+describe('ReportLifecycleService (integration)', () => {
+  const prisma = new PrismaService();
+  const service = new ReportLifecycleService(prisma);
+
+  let unitId: string;
+  let formTemplateId: string;
+  let residentIndicatorId: string;
+  let volatileIndicatorId: string;
+
+  const july2026 = new Date(Date.UTC(2026, 6, 1));
+  const august2026 = new Date(Date.UTC(2026, 7, 1));
+
+  beforeAll(async () => {
+    await prisma.$connect();
+
+    const template = await prisma.formTemplate.create({
+      data: { name: 'Template Lifecycle Test' },
+    });
+    formTemplateId = template.id;
+
+    const topic = await prisma.formTopic.create({
+      data: { formTemplateId, title: 'Infra' },
+    });
+
+    const residentIndicator = await prisma.formIndicator.create({
+      data: {
+        formTopicId: topic.id,
+        title: 'Servidores Fisicos',
+        objective: 'Inventario',
+        variableKeys: ['QTD'],
+        formulaExpression: 'QTD',
+        goalOperator: GoalOperator.GTE,
+        goalValue: 0,
+        isResidentState: true,
+      },
+    });
+    residentIndicatorId = residentIndicator.id;
+
+    const volatileIndicator = await prisma.formIndicator.create({
+      data: {
+        formTopicId: topic.id,
+        title: 'Uptime',
+        objective: 'Disponibilidade',
+        variableKeys: ['A', 'B'],
+        formulaExpression: '(A/(A+B))*100',
+        goalOperator: GoalOperator.GTE,
+        goalValue: 95,
+        isResidentState: false,
+      },
+    });
+    volatileIndicatorId = volatileIndicator.id;
+
+    const unit = await prisma.unit.create({
+      data: { sigla: 'LIFE-TEST', nome: 'Unidade Teste Lifecycle', level: UnitLevel.A, formTemplateId },
+    });
+    unitId = unit.id;
+  });
+
+  afterAll(async () => {
+    await prisma.indicatorResponse.deleteMany({ where: { reportInstance: { unitId } } });
+    await prisma.reportInstance.deleteMany({ where: { unitId } });
+    await prisma.unit.delete({ where: { id: unitId } });
+    await prisma.formIndicator.deleteMany({ where: { id: { in: [residentIndicatorId, volatileIndicatorId] } } });
+    await prisma.formTopic.deleteMany({ where: { formTemplateId } });
+    await prisma.formTemplate.delete({ where: { id: formTemplateId } });
+    await prisma.$disconnect();
+  });
+
+  test('opens a period with correct DU due dates and empty snapshots for a unit with no history', async () => {
+    const unit = await prisma.unit.findUniqueOrThrow({ where: { id: unitId } });
+    const report = await service.openPeriodForUnit(unit, july2026);
+
+    expect(report).not.toBeNull();
+    expect(report!.status).toBe('PENDENTE');
+    expect(report!.elaborationDueDate.toISOString().slice(0, 10)).toBe('2026-07-08');
+    expect(report!.reviewDueDate.toISOString().slice(0, 10)).toBe('2026-07-10');
+    expect(report!.approvalDueDate.toISOString().slice(0, 10)).toBe('2026-07-14');
+
+    const responses = await prisma.indicatorResponse.findMany({ where: { reportInstanceId: report!.id } });
+    expect(responses).toHaveLength(2);
+    expect(responses.every((r) => !r.isClonedFromResident)).toBe(true);
+  });
+
+  test('is idempotent: calling it again for the same unit/month returns the existing instance', async () => {
+    const unit = await prisma.unit.findUniqueOrThrow({ where: { id: unitId } });
+    const first = await service.openPeriodForUnit(unit, july2026);
+    const second = await service.openPeriodForUnit(unit, july2026);
+
+    expect(second!.id).toBe(first!.id);
+    const count = await prisma.reportInstance.count({ where: { unitId, referenceMonth: july2026 } });
+    expect(count).toBe(1);
+  });
+
+  test('clones the resident-state indicator value into the next month, but not the volatile one', async () => {
+    const julyReport = await prisma.reportInstance.findUniqueOrThrow({
+      where: { unitId_referenceMonth: { unitId, referenceMonth: july2026 } },
+    });
+    await prisma.indicatorResponse.updateMany({
+      where: { reportInstanceId: julyReport.id, formIndicatorId: residentIndicatorId },
+      data: { variableValues: { QTD: 42 } },
+    });
+    await prisma.indicatorResponse.updateMany({
+      where: { reportInstanceId: julyReport.id, formIndicatorId: volatileIndicatorId },
+      data: { variableValues: { A: 10, B: 1 } },
+    });
+
+    const unit = await prisma.unit.findUniqueOrThrow({ where: { id: unitId } });
+    const augustReport = await service.openPeriodForUnit(unit, august2026);
+
+    const residentResponse = await prisma.indicatorResponse.findFirstOrThrow({
+      where: { reportInstanceId: augustReport!.id, formIndicatorId: residentIndicatorId },
+    });
+    expect(residentResponse.isClonedFromResident).toBe(true);
+    expect(residentResponse.variableValues).toEqual({ QTD: 42 });
+
+    const volatileResponse = await prisma.indicatorResponse.findFirstOrThrow({
+      where: { reportInstanceId: augustReport!.id, formIndicatorId: volatileIndicatorId },
+    });
+    expect(volatileResponse.isClonedFromResident).toBe(false);
+    expect(volatileResponse.variableValues).toEqual({});
+  });
+});

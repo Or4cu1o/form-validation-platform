@@ -1,3 +1,8 @@
 .env
 template-forms/
 node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+.DS_Store

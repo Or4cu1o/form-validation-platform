@@ -1,4 +1,17 @@
 {
+  "name": "rtio",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run start:dev --workspace=apps/api",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspace=apps/api && npm run build --workspace=apps/web",
+    "test": "npm run test --workspace=apps/api && npm run test --workspace=apps/web",
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down"
+  },
   "dependencies": {
     "ecc-universal": "^2.0.0"
   }

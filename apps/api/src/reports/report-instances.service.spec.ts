@@ -1,0 +1,176 @@
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { IndicatorValidationStatus, ReportStatus, RoleName } from '@prisma/client';
+import { AuthenticatedUser } from '../auth/types/authenticated-user.interface';
+import { UnitAccessService } from '../common/services/unit-access.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { ReportInstancesService } from './report-instances.service';
+
+describe('ReportInstancesService', () => {
+  let service: ReportInstancesService;
+  let findManyMock: jest.Mock;
+  let findUniqueMock: jest.Mock;
+  let updateMock: jest.Mock;
+  let updateManyMock: jest.Mock;
+  let transactionMock: jest.Mock;
+  let hasOrgWideReadAccessMock: jest.Mock;
+  let getAccessibleUnitIdsMock: jest.Mock;
+  let assertReadAccessMock: jest.Mock;
+  let notifySubmittedForReviewMock: jest.Mock;
+  let notifySubmittedForApprovalMock: jest.Mock;
+
+  const elaborador: AuthenticatedUser = {
+    id: 'elaborador-1',
+    matricula: '10002',
+    nome: 'Elias',
+    sobrenome: 'Elaborador',
+    email: 'elaborador@rtio.local',
+    role: RoleName.ELABORADOR,
+    primaryUnitId: 'unit-1',
+  };
+  const revisor: AuthenticatedUser = { ...elaborador, id: 'revisor-1', role: RoleName.REVISOR };
+
+  beforeEach(() => {
+    findManyMock = jest.fn();
+    findUniqueMock = jest.fn();
+    updateMock = jest.fn();
+    updateManyMock = jest.fn();
+    transactionMock = jest.fn(async (_userId: string, fn: (tx: unknown) => unknown) =>
+      fn({ indicatorResponse: { updateMany: updateManyMock }, reportInstance: { update: updateMock } }),
+    );
+    hasOrgWideReadAccessMock = jest.fn();
+    getAccessibleUnitIdsMock = jest.fn();
+    assertReadAccessMock = jest.fn();
+    notifySubmittedForReviewMock = jest.fn();
+    notifySubmittedForApprovalMock = jest.fn();
+
+    const prisma = {
+      reportInstance: { findMany: findManyMock, findUnique: findUniqueMock, update: updateMock },
+      runWithAuditActor: transactionMock,
+    } as unknown as PrismaService;
+
+    const unitAccessService = {
+      hasOrgWideReadAccess: hasOrgWideReadAccessMock,
+      getAccessibleUnitIds: getAccessibleUnitIdsMock,
+      assertReadAccess: assertReadAccessMock,
+    } as unknown as UnitAccessService;
+
+    const notificationsService = {
+      notifySubmittedForReview: notifySubmittedForReviewMock,
+      notifySubmittedForApproval: notifySubmittedForApprovalMock,
+    } as unknown as NotificationsService;
+
+    service = new ReportInstancesService(prisma, unitAccessService, notificationsService);
+  });
+
+  describe('findAllForUser', () => {
+    test('scopes the query to accessible units for a non-org-wide user', async () => {
+      hasOrgWideReadAccessMock.mockReturnValue(false);
+      getAccessibleUnitIdsMock.mockResolvedValue(['unit-1', 'unit-2']);
+      findManyMock.mockResolvedValue([]);
+
+      await service.findAllForUser(elaborador);
+
+      expect(findManyMock).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ unitId: { in: ['unit-1', 'unit-2'] } }) }),
+      );
+    });
+
+    test('does not scope by unit for an org-wide user', async () => {
+      hasOrgWideReadAccessMock.mockReturnValue(true);
+      findManyMock.mockResolvedValue([]);
+
+      await service.findAllForUser({ ...elaborador, role: RoleName.ADMINISTRADOR });
+
+      expect(getAccessibleUnitIdsMock).not.toHaveBeenCalled();
+      const callArgs = findManyMock.mock.calls[0][0];
+      expect(callArgs.where.unitId).toBeUndefined();
+    });
+  });
+
+  describe('findOneForUser', () => {
+    test('throws NotFoundException when the report does not exist', async () => {
+      findUniqueMock.mockResolvedValue(null);
+
+      await expect(service.findOneForUser('missing', elaborador)).rejects.toThrow(NotFoundException);
+    });
+
+    test('enforces read access scoping before returning the report', async () => {
+      findUniqueMock.mockResolvedValue({ id: 'report-1', unitId: 'unit-1' });
+
+      await service.findOneForUser('report-1', elaborador);
+
+      expect(assertReadAccessMock).toHaveBeenCalledWith('unit-1', elaborador);
+    });
+  });
+
+  describe('submitForReview', () => {
+    test('throws ForbiddenException when the caller is not the ELABORADOR of the report unit', async () => {
+      findUniqueMock.mockResolvedValue({ id: 'report-1', unitId: 'unit-1', status: ReportStatus.PENDENTE });
+
+      await expect(service.submitForReview('report-1', revisor)).rejects.toThrow(ForbiddenException);
+    });
+
+    test('throws BadRequestException when the report is not PENDENTE', async () => {
+      findUniqueMock.mockResolvedValue({ id: 'report-1', unitId: 'unit-1', status: ReportStatus.EM_REVISAO });
+
+      await expect(service.submitForReview('report-1', elaborador)).rejects.toThrow(BadRequestException);
+    });
+
+    test('transitions PENDENTE -> EM_REVISAO and notifies the review team', async () => {
+      findUniqueMock.mockResolvedValue({ id: 'report-1', unitId: 'unit-1', status: ReportStatus.PENDENTE });
+      updateMock.mockResolvedValue({ id: 'report-1', status: ReportStatus.EM_REVISAO, unit: { id: 'unit-1' } });
+
+      await service.submitForReview('report-1', elaborador);
+
+      expect(updateMock).toHaveBeenCalledWith({
+        where: { id: 'report-1' },
+        data: { status: ReportStatus.EM_REVISAO, submittedForReviewAt: expect.any(Date) },
+        include: { unit: true },
+      });
+      expect(notifySubmittedForReviewMock).toHaveBeenCalled();
+    });
+  });
+
+  describe('submitForApproval', () => {
+    test('throws NotFoundException when the report does not exist', async () => {
+      findUniqueMock.mockResolvedValue(null);
+
+      await expect(service.submitForApproval('missing', revisor)).rejects.toThrow(NotFoundException);
+    });
+
+    test('throws ForbiddenException when the caller is not the REVISOR of the report unit', async () => {
+      findUniqueMock.mockResolvedValue({ id: 'report-1', unitId: 'unit-1', status: ReportStatus.EM_REVISAO, unit: {} });
+
+      await expect(service.submitForApproval('report-1', elaborador)).rejects.toThrow(ForbiddenException);
+    });
+
+    test('throws BadRequestException when the report is not EM_REVISAO', async () => {
+      findUniqueMock.mockResolvedValue({ id: 'report-1', unitId: 'unit-1', status: ReportStatus.PENDENTE, unit: {} });
+
+      await expect(service.submitForApproval('report-1', revisor)).rejects.toThrow(BadRequestException);
+    });
+
+    test('marks indicators PENDENTE_VALIDACAO, transitions to PENDENTE_APROVACAO, and notifies aprovadores', async () => {
+      findUniqueMock.mockResolvedValue({
+        id: 'report-1',
+        unitId: 'unit-1',
+        status: ReportStatus.EM_REVISAO,
+        unit: { id: 'unit-1' },
+      });
+      updateMock.mockResolvedValue({ id: 'report-1', status: ReportStatus.PENDENTE_APROVACAO });
+
+      await service.submitForApproval('report-1', revisor);
+
+      expect(updateManyMock).toHaveBeenCalledWith({
+        where: { reportInstanceId: 'report-1' },
+        data: { validationStatus: IndicatorValidationStatus.PENDENTE_VALIDACAO },
+      });
+      expect(updateMock).toHaveBeenCalledWith({
+        where: { id: 'report-1' },
+        data: { status: ReportStatus.PENDENTE_APROVACAO, submittedForApprovalAt: expect.any(Date) },
+      });
+      expect(notifySubmittedForApprovalMock).toHaveBeenCalled();
+    });
+  });
+});

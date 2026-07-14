@@ -1,4 +1,5 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { AuthenticatedUser } from './types/authenticated-user.interface';
@@ -9,6 +10,9 @@ import { LoginDto } from './dto/login.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  // Limite mais estrito que o default global (Fase 12 — achado HIGH: login
+  // sem rate limiting permitia forca bruta/credential stuffing).
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)

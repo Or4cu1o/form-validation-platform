@@ -12,10 +12,9 @@ import { RoleName } from '@prisma/client';
 import { AuthenticatedUser } from '../auth/types/authenticated-user.interface';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
+import { EVIDENCE_MIME_TYPE_FILTER, MAX_EVIDENCE_UPLOAD_BYTES } from '../common/evidence-upload.constants';
 import { ValidateIndicatorDto } from './dto/validate-indicator.dto';
 import { ValidationService } from './validation.service';
-
-const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
 @Roles(RoleName.APROVADOR)
 @Controller()
@@ -32,7 +31,12 @@ export class ValidationController {
   }
 
   @Post('validation-records/:id/evidence')
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_UPLOAD_BYTES } }))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: MAX_EVIDENCE_UPLOAD_BYTES },
+      fileFilter: EVIDENCE_MIME_TYPE_FILTER,
+    }),
+  )
   uploadEvidence(
     @Param('id') id: string,
     @UploadedFile(new ParseFilePipeBuilder().build({ fileIsRequired: true }))

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { validateEnv } from './config/env.validation';
@@ -22,6 +23,11 @@ import { ValidationModule } from './validation/validation.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
     ScheduleModule.forRoot(),
+    // Rate limiting global (Secao "Seguranca" do PROMPT.md): limite generoso
+    // por padrao, sobrescrito com um limite mais estrito no login via
+    // @Throttle (Fase 12 — achado HIGH da revisao de seguranca: forca bruta
+    // em POST /auth/login sem nenhum rate limiting).
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 20 }]),
     PrismaModule,
     CommonModule,
     UsersModule,
@@ -36,6 +42,7 @@ import { ValidationModule } from './validation/validation.module';
   ],
   controllers: [HealthController],
   providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
   ],

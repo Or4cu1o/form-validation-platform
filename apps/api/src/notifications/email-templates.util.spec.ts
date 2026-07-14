@@ -48,4 +48,23 @@ describe('email-templates.util', () => {
     const email = buildReportConcludedEmail(baseReport, unit);
     expect(email.subject.toLowerCase()).toContain('aprovado');
   });
+
+  test('escapes HTML in unit sigla/nome to prevent stored HTML injection in the email body', () => {
+    const maliciousUnit = { sigla: '<img src=x onerror=alert(1)>', nome: 'Filial "Injetada" & Cia' } as Unit;
+
+    const email = buildSlaOverdueEmail(baseReport, maliciousUnit);
+
+    expect(email.html).not.toContain('<img');
+    expect(email.html).toContain('&lt;img src=x onerror=alert(1)&gt;');
+    expect(email.html).toContain('Filial &quot;Injetada&quot; &amp; Cia');
+  });
+
+  test('strips CRLF from unit sigla before composing the email subject (header injection defense)', () => {
+    const maliciousUnit = { sigla: 'FIL01\r\nBcc: attacker@evil.com', nome: 'Filial Um' } as Unit;
+
+    const email = buildSlaOverdueEmail(baseReport, maliciousUnit);
+
+    expect(email.subject).not.toMatch(/[\r\n]/);
+    expect(email.subject).toContain('FIL01  Bcc: attacker@evil.com');
+  });
 });

@@ -54,7 +54,14 @@ export class S3Service implements OnModuleInit {
   }
 
   async getPresignedDownloadUrl(key: string): Promise<string> {
-    const command = new GetObjectCommand({ Bucket: this.bucket, Key: key });
+    // ResponseContentDisposition=attachment forca o navegador a baixar em
+    // vez de renderizar inline — mitigacao complementar a whitelist de MIME
+    // no upload (Fase 12, achado HIGH: upload sem filtro de tipo de arquivo).
+    const command = new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+      ResponseContentDisposition: 'attachment',
+    });
     return getSignedUrl(this.client, command, { expiresIn: PRESIGNED_URL_EXPIRES_SECONDS });
   }
 }

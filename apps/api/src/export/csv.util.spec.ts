@@ -33,4 +33,23 @@ describe('buildCsv', () => {
     const csv = buildCsv([[true, false]]);
     expect(csv).toBe('true,false');
   });
+
+  it.each(['=SUM(A1:A2)', '+1+1', '-1+1', '@SUM(A1:A2)'])(
+    'neutralizes CSV/Excel formula injection by prefixing "%s" with an apostrophe',
+    (payload) => {
+      const csv = buildCsv([[payload]]);
+      expect(csv).toBe(`'${payload}`);
+    },
+  );
+
+  it('also neutralizes a formula payload that itself contains quotes (still gets CSV-quoted afterward)', () => {
+    const csv = buildCsv([['=cmd|"/c calc"!A1']]);
+    expect(csv).toBe('"\'=cmd|""/c calc""!A1"');
+    expect(csv.replace(/^"/, '').startsWith("'=")).toBe(true);
+  });
+
+  it('does not alter fields that merely contain (but do not start with) formula trigger characters', () => {
+    const csv = buildCsv([['Total = 100']]);
+    expect(csv).toBe('Total = 100');
+  });
 });

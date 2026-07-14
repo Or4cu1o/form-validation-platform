@@ -1,13 +1,49 @@
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { AppShell } from './components/AppShell';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { AuthProvider } from './context/AuthContext';
+import { AdminAccessPage } from './pages/AdminAccessPage';
+import { AdminFormsPage } from './pages/AdminFormsPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { LoginPage } from './pages/LoginPage';
+import { NotFoundPage } from './pages/NotFoundPage';
+import { ReportDetailPage } from './pages/ReportDetailPage';
+import { ReportsPage } from './pages/ReportsPage';
+import { ValidationBoardPage } from './pages/ValidationBoardPage';
+import { ValidationDetailPage } from './pages/ValidationDetailPage';
+
 function App() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
-      <div className="text-center">
-        <h1 className="text-2xl font-semibold">RTIO</h1>
-        <p className="mt-2 text-slate-400">
-          Plataforma de Governança e Automação de Indicadores de TI — Etapa 1 em construção.
-        </p>
-      </div>
-    </main>
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AppShell />}>
+              <Route path="/" element={<DashboardPage />} />
+
+              <Route element={<ProtectedRoute allowedRoles={['ELABORADOR', 'REVISOR', 'ADMINISTRADOR']} />}>
+                <Route path="/relatorios" element={<ReportsPage />} />
+                <Route path="/relatorios/:id" element={<ReportDetailPage />} />
+              </Route>
+
+              <Route element={<ProtectedRoute allowedRoles={['APROVADOR', 'ADMINISTRADOR']} />}>
+                <Route path="/validacao" element={<ValidationBoardPage />} />
+                <Route path="/validacao/:id" element={<ValidationDetailPage />} />
+              </Route>
+
+              <Route element={<ProtectedRoute allowedRoles={['ADMINISTRADOR']} />}>
+                <Route path="/admin/acessos" element={<AdminAccessPage />} />
+                <Route path="/admin/formularios" element={<AdminFormsPage />} />
+              </Route>
+            </Route>
+          </Route>
+
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 

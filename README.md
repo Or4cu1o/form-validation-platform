@@ -1,4 +1,4 @@
-# RTIO — Plataforma de Governança e Automação de Indicadores de TI
+# Plataforma de Governança e Automação de Indicadores de TI
 
 Plataforma web para digitalizar, centralizar e auditar o processo de confecção do
 Relatório Operacional de TI das unidades da organização, substituindo o modelo

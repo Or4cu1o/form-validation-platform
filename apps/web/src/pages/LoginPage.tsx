@@ -45,7 +45,7 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen">
       <div className="hidden w-1/2 flex-col justify-between bg-console px-16 py-12 text-white lg:flex">
-        <p className="font-display text-2xl font-bold tracking-wider text-accent">GCINFRA</p>
+        <p className="font-display text-2xl font-bold tracking-wider text-white">GCINFRA</p>
         <div>
           <div className="flex justify-center mb-10">
             <img src={logoUrl} alt="Agir Saúde Logo" className="w-full max-w-lg h-auto object-contain" />

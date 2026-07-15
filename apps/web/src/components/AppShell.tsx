@@ -56,7 +56,7 @@ export function AppShell() {
     <div className="flex min-h-screen bg-paper">
       <aside className="flex w-64 shrink-0 flex-col bg-console text-white">
         <div className="border-b border-console-border px-6 py-5">
-          <p className="font-display text-lg font-bold tracking-wider text-accent">GCINFRA</p>
+          <p className="font-display text-lg font-bold tracking-wider text-white">GCINFRA</p>
           <p className="text-[10px] text-white/50 uppercase tracking-widest mt-0.5">Gerência de Infraestrutura</p>
         </div>
 
@@ -69,7 +69,7 @@ export function AppShell() {
               className={({ isActive }) =>
                 cn(
                   'flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors',
-                  isActive ? 'bg-console-raised text-accent' : 'text-white/70 hover:bg-console-raised hover:text-white',
+                  isActive ? 'bg-accent text-white font-medium shadow-sm' : 'text-slate-300 hover:bg-console-raised hover:text-white',
                 )
               }
             >

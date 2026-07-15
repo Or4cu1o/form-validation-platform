@@ -5,34 +5,34 @@ export default {
     extend: {
       colors: {
         paper: {
-          DEFAULT: 'oklch(97.5% 0.006 85)',
-          raised: 'oklch(99% 0.003 85)',
+          DEFAULT: '#f8fafc', // slate-50
+          raised: '#ffffff',  // pure white
         },
         ink: {
-          DEFAULT: 'oklch(22% 0.02 260)',
-          muted: 'oklch(45% 0.015 260)',
-          faint: 'oklch(62% 0.012 260)',
+          DEFAULT: '#0f172a', // slate-900
+          muted: '#475569',   // slate-600
+          faint: '#94a3b8',   // slate-400
         },
         console: {
-          DEFAULT: '#06514C',
-          raised: '#05413d',
-          border: '#043330',
+          DEFAULT: '#0f172a', // deep slate-900 for sidebar
+          raised: '#1e293b',  // slate-800
+          border: '#334155',  // slate-700
         },
         accent: {
-          DEFAULT: '#00549a',
+          DEFAULT: '#00549a', // Agir Blue
           hover: '#00427a',
-          ink: '#002b50',
+          ink: '#ffffff',
         },
         status: {
-          pendente: 'oklch(58% 0.02 260)',
+          pendente: '#64748b',
           revisao: '#00549a',
-          aprovacao: 'oklch(62% 0.14 245)',
-          concluido: 'oklch(62% 0.13 155)',
-          reprovado: 'oklch(58% 0.19 25)',
+          aprovacao: '#0284c7',
+          concluido: '#16a34a',
+          reprovado: '#dc2626',
         },
         border: {
-          DEFAULT: 'oklch(88% 0.008 85)',
-          strong: 'oklch(78% 0.012 85)',
+          DEFAULT: '#e2e8f0', // slate-200
+          strong: '#cbd5e1',  // slate-300
         },
       },
       fontFamily: {

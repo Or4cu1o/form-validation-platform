@@ -3,7 +3,7 @@ import type { StatusTone } from '../../lib/status';
 
 const toneClasses: Record<StatusTone, string> = {
   pendente: 'bg-status-pendente/15 text-ink-muted',
-  revisao: 'bg-status-revisao/20 text-accent-ink',
+  revisao: 'bg-status-revisao/20 text-status-revisao',
   aprovacao: 'bg-status-aprovacao/15 text-status-aprovacao',
   concluido: 'bg-status-concluido/15 text-status-concluido',
   reprovado: 'bg-status-reprovado/15 text-status-reprovado',

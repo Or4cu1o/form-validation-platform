@@ -48,6 +48,8 @@ export class IndicatorResponsesService {
           variableValues: mergedValues,
           calculatedValue,
           isCompliant,
+          criticalAnalysis: dto.criticalAnalysis !== undefined ? dto.criticalAnalysis : response.criticalAnalysis,
+          actionPlan: dto.actionPlan !== undefined ? dto.actionPlan : response.actionPlan,
           updatedByUserId: user.id,
         },
       }),

@@ -30,3 +30,7 @@ export function submitForApproval(id: string): Promise<ReportInstance> {
 export function finalizeReportInstance(id: string): Promise<ReportInstance> {
   return apiSend<ReportInstance>('POST', `/report-instances/${encodeURIComponent(id)}/finalize`);
 }
+
+export function startCurrentReportInstance(): Promise<ReportInstance> {
+  return apiSend<ReportInstance>('POST', '/report-instances/start-current');
+}

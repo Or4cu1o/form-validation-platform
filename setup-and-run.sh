@@ -84,23 +84,60 @@ status_app() {
 # Parar os processos locais da aplicação (Backend NestJS e Frontend Vite)
 stop_app() {
     echo -e "${YELLOW}Parando processos locais da aplicação RTIO (Backend e Frontend)...${NC}"
+
+    # Função auxiliar: mata um processo e todo o seu grupo de processos
+    kill_proc_group() {
+        local pid="$1" label="$2"
+        if [ -z "$pid" ] || ! kill -0 "$pid" 2>/dev/null; then return; fi
+        echo "Parando ${label} (PID: $pid)..."
+        # Tenta matar o grupo inteiro (processos filhos incluídos)
+        local pgid
+        pgid=$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')
+        if [ -n "$pgid" ] && [ "$pgid" != "0" ]; then
+            kill -- -"$pgid" 2>/dev/null || kill "$pid" 2>/dev/null || true
+        else
+            kill "$pid" 2>/dev/null || true
+        fi
+        # Aguarda até 5s para o processo terminar
+        local i=0
+        while kill -0 "$pid" 2>/dev/null && [ $i -lt 10 ]; do sleep 0.5; i=$((i+1)); done
+        # Se ainda estiver vivo, força com SIGKILL
+        if kill -0 "$pid" 2>/dev/null; then
+            kill -9 "$pid" 2>/dev/null || true
+            [ -n "$pgid" ] && kill -9 -- -"$pgid" 2>/dev/null || true
+        fi
+    }
+
     if [ -f "$PID_FILE" ]; then
-        # Carregar PIDs salvos
         source "$PID_FILE"
-        
-        if [ -n "$SAVED_API_PID" ] && kill -0 "$SAVED_API_PID" 2>/dev/null; then
-            echo "Parando Backend API (PID: $SAVED_API_PID)..."
-            kill "$SAVED_API_PID" 2>/dev/null || true
-        fi
-        if [ -n "$SAVED_WEB_PID" ] && kill -0 "$SAVED_WEB_PID" 2>/dev/null; then
-            echo "Parando Frontend Web (PID: $SAVED_WEB_PID)..."
-            kill "$SAVED_WEB_PID" 2>/dev/null || true
-        fi
+        kill_proc_group "$SAVED_API_PID" "Backend API"
+        kill_proc_group "$SAVED_WEB_PID" "Frontend Web"
         rm -f "$PID_FILE"
-        echo -e "${GREEN}✓ Processos locais finalizados.${NC}"
     else
         echo -e "${YELLOW}Aviso: Nenhum processo RTIO ativo registrado em $PID_FILE para parar.${NC}"
     fi
+
+    # Garantia extra: matar qualquer processo node/vite/nest nas portas da aplicação,
+    # sem matar o próprio script ($$) nem o grupo de processos do script (BASHPID).
+    _kill_port_pids() {
+        local port="$1"
+        if ! command -v fuser &>/dev/null; then return; fi
+        local pids
+        pids=$(fuser "${port}/tcp" 2>/dev/null | tr ' ' '\n' | grep -v "^$$\$" | grep -v "^$BASHPID\$" | grep -v '^$') || true
+        for p in $pids; do
+            # Matar apenas processos node (vite/nest/api)
+            local cmd
+            cmd=$(ps -o comm= -p "$p" 2>/dev/null) || continue
+            if echo "$cmd" | grep -qiE "node|vite"; then
+                echo "Matando processo $p ($cmd) na porta $port..."
+                kill -9 "$p" 2>/dev/null || true
+            fi
+        done
+    }
+    _kill_port_pids "${API_PORT:-7444}"
+    _kill_port_pids "${WEB_PORT:-7443}"
+
+    echo -e "${GREEN}✓ Processos locais finalizados.${NC}"
 }
 
 # Parar todos os serviços, incluindo containers Docker
@@ -386,7 +423,7 @@ echo -e "Ambiente detectado: ${GREEN}NODE_ENV=${NODE_ENV}${NC}"
 # Instalar dependências npm do monorepo
 CURRENT_STEP="Instalação de dependências npm (npm install)"
 echo "Instalando dependências do projeto (npm install)..."
-npm install
+npm install --ignore-scripts --no-audit
 
 # 4. Inicialização da infraestrutura de apoio (PostgreSQL + MinIO)
 CURRENT_STEP="Inicialização dos containers Docker"
@@ -468,6 +505,9 @@ CURRENT_STEP="Inicialização dos servidores da aplicação (Vite/NestJS)"
 echo -e "\n${BLUE}[5/5] Iniciando os serviços da aplicação em background (${NODE_ENV})...${NC}"
 
 if [ "$NODE_ENV" = "production" ]; then
+    # Em produção: limpar dist, tsbuildinfo e fazer build completo antes de subir
+    echo "Limpando builds e caches antigos do NestJS..."
+    rm -rf apps/api/dist apps/api/tsconfig.tsbuildinfo
     echo "Executando build de produção..."
     npm run build
     
@@ -479,6 +519,8 @@ if [ "$NODE_ENV" = "production" ]; then
     npm run preview --workspace=apps/web -- --port "$WEB_PORT" --host > "$LOGS_DIR/web.log" 2>&1 &
     WEB_PID=$!
 else
+    # Em dev: NÃO apagar o dist para preservar o cache incremental do TypeScript
+    # O nest start --watch recompila apenas o que mudou, acelerando o startup
     echo "Iniciando backend (API NestJS) em modo dev (Redirecionando logs)..."
     npm run dev:api > "$LOGS_DIR/api.log" 2>&1 &
     API_PID=$!
@@ -492,12 +534,16 @@ fi
 CURRENT_STEP="Validação da integridade dos serviços e Healthcheck"
 echo -e "\n${BLUE}Validando a inicialização da aplicação...${NC}"
 
-# Esperar até 30 segundos para o backend (NestJS compilando/inicializando)
-MAX_HEALTH_RETRIES=15
+# Esperar até ~80 segundos para o backend (NestJS precisa compilar o TS na 1ª vez)
+# O nest start --watch compila antes de subir; dar tempo suficiente é essencial.
+MAX_HEALTH_RETRIES=40
 HEALTH_RETRY=0
 HEALTH_OK=false
 
 echo "Aguardando resposta do healthcheck da API (http://localhost:$API_PORT/health)..."
+echo "(O NestJS precisa compilar o TypeScript antes de subir — aguarde até ~80s)"
+# Pausa inicial de 10s para o nest iniciar a compilação antes de checar
+sleep 10
 while [ $HEALTH_RETRY -lt $MAX_HEALTH_RETRIES ]; do
     # Tenta obter status code 200 do healthcheck da API
     API_STATUS_CODE=$(curl -s -w "%{http_code}" -o /dev/null "http://localhost:$API_PORT/health" || echo "000")

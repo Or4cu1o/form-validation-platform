@@ -76,6 +76,7 @@ export interface FormIndicator {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  formTopic?: FormTopic;
 }
 
 export interface FormTopic {
@@ -142,6 +143,9 @@ export interface IndicatorResponse {
   updatedAt: string;
   evidenceFiles?: EvidenceFile[];
   validationRecords?: ValidationRecord[];
+  formIndicator?: FormIndicator;
+  criticalAnalysis?: string | null;
+  actionPlan?: string | null;
 }
 
 export interface ReportInstance {

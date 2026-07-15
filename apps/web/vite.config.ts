@@ -6,21 +6,91 @@ import react from '@vitejs/plugin-react';
 // apps/web/.env. Le so a linha WEB_PORT diretamente do arquivo em vez de usar
 // o loadEnv() do Vite, que carrega o NODE_ENV do .env junto e sobrescreve o
 // modo de build (gera bundle de producao nao minificado).
-function readRootEnvWebPort(): number | undefined {
+import { isAbsolute, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// O .env do monorepo fica na raiz (dois niveis acima de apps/web), nao em
+// apps/web/.env. Le so a linha WEB_PORT diretamente do arquivo em vez de usar
+// o loadEnv() do Vite, que carrega o NODE_ENV do .env junto e sobrescreve o
+// modo de build (gera bundle de producao nao minificado).
+interface RootEnv {
+  webPort: number | undefined;
+  enableHttps: boolean;
+  sslKeyPath: string | undefined;
+  sslCertPath: string | undefined;
+  viteVars: Record<string, string>;
+}
+
+function readRootEnv(): RootEnv {
   try {
     const content = readFileSync(new URL('../../.env', import.meta.url), 'utf-8');
-    const match = content.match(/^WEB_PORT=(\d+)/m);
-    return match ? Number(match[1]) : undefined;
+    const viteVars: Record<string, string> = {};
+    let webPort: number | undefined;
+    let enableHttps = false;
+    let sslKeyPath: string | undefined;
+    let sslCertPath: string | undefined;
+
+    for (const rawLine of content.split('\n')) {
+      const line = rawLine.trim();
+      // Ignorar comentarios e linhas vazias
+      if (!line || line.startsWith('#')) continue;
+      const eqIdx = line.indexOf('=');
+      if (eqIdx === -1) continue;
+      const key = line.slice(0, eqIdx).trim();
+      const val = line.slice(eqIdx + 1).trim();
+
+      if (key === 'WEB_PORT') {
+        const n = Number(val);
+        if (!isNaN(n)) webPort = n;
+      } else if (key === 'ENABLE_HTTPS') {
+        enableHttps = val === 'true';
+      } else if (key === 'SSL_KEY_PATH') {
+        sslKeyPath = val;
+      } else if (key === 'SSL_CERT_PATH') {
+        sslCertPath = val;
+      }
+      // Injeta todas as variaveis VITE_* no bundle via import.meta.env
+      if (key.startsWith('VITE_')) {
+        viteVars[key] = val;
+      }
+    }
+    return { webPort, enableHttps, sslKeyPath, sslCertPath, viteVars };
   } catch {
-    return undefined;
+    return { webPort: undefined, enableHttps: false, sslKeyPath: undefined, sslCertPath: undefined, viteVars: {} };
   }
 }
 
+const { webPort, enableHttps, sslKeyPath, sslCertPath, viteVars } = readRootEnv();
+
+// Transforma {VITE_API_URL: 'http://...'} em {'import.meta.env.VITE_API_URL': '"http://..."'}
+// para que o Vite substitua estaticamente nos bundles
+const defineEnv = Object.fromEntries(
+  Object.entries(viteVars).map(([k, v]) => [`import.meta.env.${k}`, JSON.stringify(v)]),
+);
+
+const resolveRootPath = (p: string) => {
+  if (isAbsolute(p)) return p;
+  const projectRoot = fileURLToPath(new URL('../../', import.meta.url));
+  return resolve(projectRoot, p);
+};
+
+const httpsConfig = enableHttps && sslKeyPath && sslCertPath ? {
+  key: readFileSync(resolveRootPath(sslKeyPath)),
+  cert: readFileSync(resolveRootPath(sslCertPath)),
+} : undefined;
+
 export default defineConfig({
   plugins: [react()],
+  define: defineEnv,
   server: {
     host: true,
-    port: readRootEnvWebPort() ?? 5173,
+    port: webPort ?? 5173,
+    https: httpsConfig,
+  },
+  preview: {
+    host: true,
+    port: webPort ?? 4173,
+    https: httpsConfig,
   },
   test: {
     environment: 'jsdom',

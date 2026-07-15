@@ -4,8 +4,14 @@ import type { EvidenceFile, IndicatorResponse } from '../types/api';
 export function updateIndicatorResponseValues(
   id: string,
   variableValues: Record<string, number>,
+  criticalAnalysis?: string,
+  actionPlan?: string,
 ): Promise<IndicatorResponse> {
-  return apiSend<IndicatorResponse>('PATCH', `/indicator-responses/${encodeURIComponent(id)}`, { variableValues });
+  return apiSend<IndicatorResponse>('PATCH', `/indicator-responses/${encodeURIComponent(id)}`, {
+    variableValues,
+    criticalAnalysis,
+    actionPlan,
+  });
 }
 
 export function uploadIndicatorEvidence(id: string, file: File): Promise<EvidenceFile> {

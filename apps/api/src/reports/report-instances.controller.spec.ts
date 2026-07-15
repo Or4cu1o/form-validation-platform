@@ -9,6 +9,7 @@ describe('ReportInstancesController', () => {
   let findOneForUserMock: jest.Mock;
   let submitForReviewMock: jest.Mock;
   let submitForApprovalMock: jest.Mock;
+  let startCurrentPeriodForElaboradorMock: jest.Mock;
 
   const user: AuthenticatedUser = {
     id: 'elaborador-1',
@@ -25,11 +26,13 @@ describe('ReportInstancesController', () => {
     findOneForUserMock = jest.fn().mockResolvedValue({ id: 'report-1' });
     submitForReviewMock = jest.fn().mockResolvedValue({ id: 'report-1' });
     submitForApprovalMock = jest.fn().mockResolvedValue({ id: 'report-1' });
+    startCurrentPeriodForElaboradorMock = jest.fn().mockResolvedValue({ id: 'report-new' });
     const reportInstancesService = {
       findAllForUser: findAllForUserMock,
       findOneForUser: findOneForUserMock,
       submitForReview: submitForReviewMock,
       submitForApproval: submitForApprovalMock,
+      startCurrentPeriodForElaborador: startCurrentPeriodForElaboradorMock,
     } as unknown as ReportInstancesService;
     controller = new ReportInstancesController(reportInstancesService);
   });
@@ -58,5 +61,11 @@ describe('ReportInstancesController', () => {
     await controller.submitForApproval('report-1', user);
 
     expect(submitForApprovalMock).toHaveBeenCalledWith('report-1', user);
+  });
+
+  test('startCurrent delegates to ReportInstancesService.startCurrentPeriodForElaborador with user', async () => {
+    await controller.startCurrent(user);
+
+    expect(startCurrentPeriodForElaboradorMock).toHaveBeenCalledWith(user);
   });
 });

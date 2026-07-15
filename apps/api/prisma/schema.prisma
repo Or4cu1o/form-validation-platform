@@ -241,6 +241,8 @@ model IndicatorResponse {
   calculatedValue      Decimal? @map("calculated_value") @db.Decimal(18, 4)
   isCompliant          Boolean? @map("is_compliant")
   isClonedFromResident Boolean  @default(false) @map("is_cloned_from_resident")
+  criticalAnalysis     String?  @map("critical_analysis")
+  actionPlan           String?  @map("action_plan")
 
   validationStatus IndicatorValidationStatus @default(EM_REVISAO) @map("validation_status")
 

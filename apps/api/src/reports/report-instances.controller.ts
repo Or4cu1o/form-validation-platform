@@ -15,6 +15,12 @@ export class ReportInstancesController {
     return this.reportInstancesService.findAllForUser(user, query);
   }
 
+  @Roles(RoleName.ELABORADOR)
+  @Post('start-current')
+  startCurrent(@CurrentUser() user: AuthenticatedUser) {
+    return this.reportInstancesService.startCurrentPeriodForElaborador(user);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.reportInstancesService.findOneForUser(id, user);

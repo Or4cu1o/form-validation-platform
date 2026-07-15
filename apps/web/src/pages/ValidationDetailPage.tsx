@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PageHeader } from '../components/PageHeader';
@@ -32,6 +33,34 @@ export function ValidationDetailPage() {
     onError: () => showToast('Não foi possível finalizar o relatório.', 'error'),
   });
 
+  const responses = report?.indicatorResponses ?? [];
+
+  const groupedResponses = useMemo(() => {
+    const map = new Map<string, { title: string; order: number; responses: any[] }>();
+    const noTopicResponses: any[] = [];
+
+    if (!report) return [];
+
+    for (const res of responses) {
+      const topic = res.formIndicator?.formTopic;
+      if (topic) {
+        const key = topic.id;
+        if (!map.has(key)) {
+          map.set(key, { title: topic.title, order: topic.order, responses: [] });
+        }
+        map.get(key)!.responses.push(res);
+      } else {
+        noTopicResponses.push(res);
+      }
+    }
+
+    const sortedGroups = Array.from(map.values()).sort((a, b) => a.order - b.order);
+    if (noTopicResponses.length > 0) {
+      sortedGroups.push({ title: 'Geral', order: 999, responses: noTopicResponses });
+    }
+    return sortedGroups;
+  }, [responses, report]);
+
   if (isLoading) {
     return (
       <div className="p-8">
@@ -49,7 +78,6 @@ export function ValidationDetailPage() {
   }
 
   const isValidatable = report.status === 'PENDENTE_APROVACAO' && user.role === 'APROVADOR';
-  const responses = report.indicatorResponses ?? [];
   const hasPendingValidation = responses.some((response) => response.validationStatus === 'PENDENTE_VALIDACAO');
   const canFinalize = isValidatable && responses.length > 0 && !hasPendingValidation;
 
@@ -75,9 +103,18 @@ export function ValidationDetailPage() {
         }
       />
 
-      <div className="flex flex-col gap-5 p-8">
-        {responses.map((response) => (
-          <ValidationIndicatorCard key={response.id} response={response} reportInstanceId={report.id} isValidatable={isValidatable} />
+      <div className="flex flex-col gap-8 p-8">
+        {groupedResponses.map((group) => (
+          <div key={group.title} className="flex flex-col gap-4">
+            <h2 className="font-display text-xl font-semibold text-ink border-b border-border pb-2">
+              {group.title}
+            </h2>
+            <div className="flex flex-col gap-5">
+              {group.responses.map((response) => (
+                <ValidationIndicatorCard key={response.id} response={response} reportInstanceId={report.id} isValidatable={isValidatable} />
+              ))}
+            </div>
+          </div>
         ))}
 
         {responses.length === 0 && (

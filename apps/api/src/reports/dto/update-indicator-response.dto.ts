@@ -1,4 +1,4 @@
-import { IsObject } from 'class-validator';
+import { IsObject, IsOptional, IsString } from 'class-validator';
 
 export class UpdateIndicatorResponseDto {
   // Chaves e tipos validados dinamicamente no service contra as
@@ -6,4 +6,12 @@ export class UpdateIndicatorResponseDto {
   // um DTO cujas chaves variam por indicador).
   @IsObject()
   variableValues!: Record<string, number>;
+
+  @IsOptional()
+  @IsString()
+  criticalAnalysis?: string;
+
+  @IsOptional()
+  @IsString()
+  actionPlan?: string;
 }

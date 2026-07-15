@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle } from 'lucide-react';
@@ -38,6 +39,32 @@ export function ReportDetailPage() {
     },
     onError: () => showToast('Não foi possível enviar para aprovação.', 'error'),
   });
+
+  const groupedResponses = useMemo(() => {
+    const map = new Map<string, { title: string; order: number; responses: any[] }>();
+    const noTopicResponses: any[] = [];
+
+    if (!report) return [];
+
+    for (const res of report.indicatorResponses ?? []) {
+      const topic = res.formIndicator?.formTopic;
+      if (topic) {
+        const key = topic.id;
+        if (!map.has(key)) {
+          map.set(key, { title: topic.title, order: topic.order, responses: [] });
+        }
+        map.get(key)!.responses.push(res);
+      } else {
+        noTopicResponses.push(res);
+      }
+    }
+
+    const sortedGroups = Array.from(map.values()).sort((a, b) => a.order - b.order);
+    if (noTopicResponses.length > 0) {
+      sortedGroups.push({ title: 'Geral', order: 999, responses: noTopicResponses });
+    }
+    return sortedGroups;
+  }, [report?.indicatorResponses]);
 
   if (isLoading) {
     return (
@@ -83,7 +110,7 @@ export function ReportDetailPage() {
         }
       />
 
-      <div className="flex flex-col gap-5 p-8">
+      <div className="flex flex-col gap-8 p-8">
         {wasReproved && (
           <div className="flex items-start gap-3 rounded-lg border border-accent/40 bg-accent/10 px-4 py-3 text-sm text-accent-ink">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
@@ -96,8 +123,17 @@ export function ReportDetailPage() {
           </div>
         )}
 
-        {(report.indicatorResponses ?? []).map((response) => (
-          <IndicatorResponseCard key={response.id} response={response} reportInstanceId={report.id} isEditable={isEditable} />
+        {groupedResponses.map((group) => (
+          <div key={group.title} className="flex flex-col gap-4">
+            <h2 className="font-display text-xl font-semibold text-ink border-b border-border pb-2">
+              {group.title}
+            </h2>
+            <div className="flex flex-col gap-5">
+              {group.responses.map((response) => (
+                <IndicatorResponseCard key={response.id} response={response} reportInstanceId={report.id} isEditable={isEditable} />
+              ))}
+            </div>
+          </div>
         ))}
 
         {(report.indicatorResponses ?? []).length === 0 && (

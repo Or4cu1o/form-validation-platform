@@ -6,7 +6,7 @@ import { getEvidenceDownloadUrl } from '../../api/evidence';
 import { Button, StatusBadge, useToast } from '../ui';
 import { ValidationVerdictModal } from './ValidationVerdictModal';
 import { formatDateTime, formatNumber } from '../../lib/format';
-import { GOAL_OPERATOR_SYMBOL, INDICATOR_VALIDATION_LABEL, INDICATOR_VALIDATION_TONE, VALIDATION_VERDICT_LABEL } from '../../lib/status';
+import { GOAL_OPERATOR_SYMBOL, INDICATOR_VALIDATION_LABEL, INDICATOR_VALIDATION_TONE, VALIDATION_VERDICT_LABEL, VARIABLE_LABELS } from '../../lib/status';
 import { cn } from '../../lib/cn';
 import type { IndicatorResponse, ValidationVerdict } from '../../types/api';
 
@@ -88,13 +88,31 @@ export function ValidationIndicatorCard({ response, reportInstanceId, isValidata
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="mt-6 flex flex-col gap-5 max-w-2xl">
         {response.snapshotVariableKeys.map((key) => (
-          <div key={key} className="flex flex-col gap-1">
-            <p className="font-mono text-xs text-ink-faint">{key}</p>
-            <p className="data-figure text-sm text-ink">{formatNumber(response.variableValues?.[key])}</p>
+          <div key={key} className="flex flex-col gap-1 border-b border-border/40 pb-2">
+            <p className="text-xs font-semibold text-ink-muted">{VARIABLE_LABELS[key] ?? key}</p>
+            <p className="data-figure text-sm text-ink mt-0.5">{formatNumber(response.variableValues?.[key])}</p>
           </div>
         ))}
+
+        {response.criticalAnalysis && (
+          <div className="flex flex-col gap-1 border-t border-border pt-4 mt-2">
+            <p className="text-xs font-semibold text-ink">Análise Crítica</p>
+            <p className="text-sm text-ink-muted mt-1 whitespace-pre-wrap bg-paper px-3 py-2.5 rounded border border-border">
+              {response.criticalAnalysis}
+            </p>
+          </div>
+        )}
+
+        {response.actionPlan && (
+          <div className="flex flex-col gap-1 mt-2">
+            <p className="text-xs font-semibold text-ink">Plano de ação para alcançar a meta</p>
+            <p className="text-sm text-ink-muted mt-1 whitespace-pre-wrap bg-paper px-3 py-2.5 rounded border border-border">
+              {response.actionPlan}
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="mt-5 border-t border-border pt-4">

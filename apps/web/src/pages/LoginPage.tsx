@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { ApiError } from '../lib/api-error';
 import { Button, Field, Input } from '../components/ui';
 
+const logoUrl = '/logo-agir-branco.png';
+
 export function LoginPage() {
   const { user, login } = useAuth();
   const navigate = useNavigate();
@@ -43,8 +45,11 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen">
       <div className="hidden w-1/2 flex-col justify-between bg-console px-16 py-12 text-white lg:flex">
-        <p className="font-display text-2xl font-medium tracking-tight">RTIO</p>
+        <p className="font-display text-2xl font-bold tracking-wider text-accent">GCINFRA</p>
         <div>
+          <div className="flex justify-center mb-10">
+            <img src={logoUrl} alt="Agir Saúde Logo" className="w-full max-w-lg h-auto object-contain" />
+          </div>
           <h1 className="font-display text-display-lg font-medium leading-tight text-white">
             Governança e automação de indicadores de TI.
           </h1>
@@ -53,7 +58,7 @@ export function LoginPage() {
             do lançamento à aprovação final.
           </p>
         </div>
-        <p className="text-xs text-white/40">Sistema RTIO &middot; Etapa 1</p>
+        <p className="text-xs text-white/40">GCINFRA — Gerência Corporativa de Infraestrutura | AGIR 2026</p>
       </div>
 
       <div className="flex w-full flex-1 items-center justify-center bg-paper px-6 py-12 lg:w-1/2">

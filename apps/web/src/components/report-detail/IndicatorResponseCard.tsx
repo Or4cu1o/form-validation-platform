@@ -1,11 +1,11 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Paperclip, UploadCloud, XCircle } from 'lucide-react';
 import { updateIndicatorResponseValues, uploadIndicatorEvidence } from '../../api/indicator-responses';
 import { getEvidenceDownloadUrl } from '../../api/evidence';
 import { Button, Input, StatusBadge, useToast } from '../ui';
 import { formatBytes, formatDateTime, formatNumber } from '../../lib/format';
-import { GOAL_OPERATOR_SYMBOL, INDICATOR_VALIDATION_LABEL, INDICATOR_VALIDATION_TONE, VALIDATION_VERDICT_LABEL } from '../../lib/status';
+import { GOAL_OPERATOR_SYMBOL, INDICATOR_VALIDATION_LABEL, INDICATOR_VALIDATION_TONE, VALIDATION_VERDICT_LABEL, VARIABLE_LABELS } from '../../lib/status';
 import { cn } from '../../lib/cn';
 import type { IndicatorResponse } from '../../types/api';
 
@@ -29,8 +29,19 @@ export function IndicatorResponseCard({ response, reportInstanceId, isEditable }
   }, [response.snapshotVariableKeys, response.variableValues]);
 
   const [draftValues, setDraftValues] = useState<Record<string, string>>(initialValues);
+  const [draftCriticalAnalysis, setDraftCriticalAnalysis] = useState<string>(response.criticalAnalysis ?? '');
+  const [draftActionPlan, setDraftActionPlan] = useState<string>(response.actionPlan ?? '');
 
-  const isDirty = response.snapshotVariableKeys.some((key) => draftValues[key] !== initialValues[key]);
+  useEffect(() => {
+    setDraftValues(initialValues);
+    setDraftCriticalAnalysis(response.criticalAnalysis ?? '');
+    setDraftActionPlan(response.actionPlan ?? '');
+  }, [response, initialValues]);
+
+  const isDirty =
+    response.snapshotVariableKeys.some((key) => draftValues[key] !== initialValues[key]) ||
+    draftCriticalAnalysis !== (response.criticalAnalysis ?? '') ||
+    draftActionPlan !== (response.actionPlan ?? '');
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['report-instance', reportInstanceId] });
@@ -45,7 +56,7 @@ export function IndicatorResponseCard({ response, reportInstanceId, isEditable }
         const parsed = Number(raw);
         if (Number.isFinite(parsed)) changed[key] = parsed;
       }
-      return updateIndicatorResponseValues(response.id, changed);
+      return updateIndicatorResponseValues(response.id, changed, draftCriticalAnalysis, draftActionPlan);
     },
     onSuccess: () => {
       showToast('Valores salvos.', 'success');
@@ -119,23 +130,57 @@ export function IndicatorResponseCard({ response, reportInstanceId, isEditable }
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="mt-6 flex flex-col gap-6 max-w-2xl">
         {response.snapshotVariableKeys.map((key) => (
-          <div key={key} className="flex flex-col gap-1.5">
-            <label htmlFor={`${response.id}-${key}`} className="font-mono text-xs text-ink-faint">
-              {key}
+          <div key={key} className="flex flex-col gap-2">
+            <label htmlFor={`${response.id}-${key}`} className="text-sm font-semibold text-ink">
+              {VARIABLE_LABELS[key] ?? key}
             </label>
             <Input
               id={`${response.id}-${key}`}
               type="number"
               inputMode="decimal"
-              className="data-figure"
+              className="data-figure bg-paper h-11 border-border shadow-none focus-visible:ring-accent transition-all duration-200"
               value={draftValues[key] ?? ''}
               disabled={!isEditable}
               onChange={(event) => setDraftValues((current) => ({ ...current, [key]: event.target.value }))}
             />
           </div>
         ))}
+
+        <div className="flex flex-col gap-2 border-t border-border pt-4 mt-2">
+          <label htmlFor={`${response.id}-criticalAnalysis`} className="text-sm font-semibold text-ink">
+            Análise Crítica
+          </label>
+          <p className="text-xs text-ink-muted -mt-1">
+            Descreva as causas, justificativas ou fatores que influenciaram o resultado deste indicador no mês.
+          </p>
+          <textarea
+            id={`${response.id}-criticalAnalysis`}
+            className="w-full rounded border border-border-strong bg-paper px-3 py-2 text-sm text-ink outline-none transition-all focus:ring-2 focus:ring-accent disabled:bg-paper-flat disabled:text-ink-muted min-h-[80px]"
+            value={draftCriticalAnalysis}
+            disabled={!isEditable}
+            onChange={(event) => setDraftCriticalAnalysis(event.target.value)}
+            placeholder="Preencher análise crítica..."
+          />
+        </div>
+
+        <div className="flex flex-col gap-2 mt-2">
+          <label htmlFor={`${response.id}-actionPlan`} className="text-sm font-semibold text-ink">
+            Plano de ação para alcançar a meta
+          </label>
+          <p className="text-xs text-ink-muted -mt-1">
+            Caso o resultado esteja fora da meta, detalhe o plano de ação corretivo.
+          </p>
+          <textarea
+            id={`${response.id}-actionPlan`}
+            className="w-full rounded border border-border-strong bg-paper px-3 py-2 text-sm text-ink outline-none transition-all focus:ring-2 focus:ring-accent disabled:bg-paper-flat disabled:text-ink-muted min-h-[80px]"
+            value={draftActionPlan}
+            disabled={!isEditable}
+            onChange={(event) => setDraftActionPlan(event.target.value)}
+            placeholder="Preencher plano de ação..."
+          />
+        </div>
       </div>
 
       {isEditable && (

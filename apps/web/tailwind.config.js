@@ -14,18 +14,18 @@ export default {
           faint: 'oklch(62% 0.012 260)',
         },
         console: {
-          DEFAULT: 'oklch(24% 0.03 255)',
-          raised: 'oklch(30% 0.035 255)',
-          border: 'oklch(36% 0.035 255)',
+          DEFAULT: '#06514C',
+          raised: '#05413d',
+          border: '#043330',
         },
         accent: {
-          DEFAULT: 'oklch(72% 0.15 75)',
-          hover: 'oklch(66% 0.16 75)',
-          ink: 'oklch(28% 0.06 75)',
+          DEFAULT: '#00549a',
+          hover: '#00427a',
+          ink: '#002b50',
         },
         status: {
           pendente: 'oklch(58% 0.02 260)',
-          revisao: 'oklch(72% 0.15 75)',
+          revisao: '#00549a',
           aprovacao: 'oklch(62% 0.14 245)',
           concluido: 'oklch(62% 0.13 155)',
           reprovado: 'oklch(58% 0.19 25)',
@@ -36,8 +36,8 @@ export default {
         },
       },
       fontFamily: {
-        display: ['"Newsreader"', 'ui-serif', 'Georgia', 'serif'],
-        sans: ['"Inter"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['"SF Pro Display"', '"Inter"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['"SF Pro Text"', '"SF Pro Display"', '"Inter"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       fontSize: {

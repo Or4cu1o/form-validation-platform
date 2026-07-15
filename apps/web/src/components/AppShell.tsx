@@ -56,8 +56,8 @@ export function AppShell() {
     <div className="flex min-h-screen bg-paper">
       <aside className="flex w-64 shrink-0 flex-col bg-console text-white">
         <div className="border-b border-console-border px-6 py-5">
-          <p className="font-display text-lg font-medium tracking-tight">RTIO</p>
-          <p className="text-xs text-white/50">Governança de Indicadores de TI</p>
+          <p className="font-display text-lg font-bold tracking-wider text-accent">GCINFRA</p>
+          <p className="text-[10px] text-white/50 uppercase tracking-widest mt-0.5">Gerência de Infraestrutura</p>
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">
@@ -97,8 +97,13 @@ export function AppShell() {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto">
-        <Outlet />
+      <main className="flex-1 overflow-y-auto flex flex-col justify-between">
+        <div className="flex-1">
+          <Outlet />
+        </div>
+        <footer className="border-t border-border px-8 py-4 bg-paper-raised text-center text-xs text-ink-faint">
+          GCINFRA — Gerência Corporativa de Infraestrutura | © 2026 AGIR - Associação de Gestão, Inovação e Resultados em Saúde
+        </footer>
       </main>
     </div>
   );

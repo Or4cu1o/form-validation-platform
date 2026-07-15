@@ -67,10 +67,15 @@ describe('IndicatorResponseCard', () => {
       fireEvent.click(saveButton);
     });
 
-    expect(indicatorResponsesApi.updateIndicatorResponseValues).toHaveBeenCalledWith('response-1', {
-      uptimeMinutos: 1435,
-      totalMinutos: 1440,
-    });
+    expect(indicatorResponsesApi.updateIndicatorResponseValues).toHaveBeenCalledWith(
+      'response-1',
+      {
+        uptimeMinutos: 1435,
+        totalMinutos: 1440,
+      },
+      '',
+      '',
+    );
   });
 
   it('shows "Fora da meta" when isCompliant is false', () => {

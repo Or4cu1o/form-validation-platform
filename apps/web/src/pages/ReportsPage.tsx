@@ -1,17 +1,32 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../components/PageHeader';
 import { useAuth } from '../context/AuthContext';
-import { listReportInstances } from '../api/reports';
+import { listReportInstances, startCurrentReportInstance } from '../api/reports';
 import { formatDateTime, formatReferenceMonth } from '../lib/format';
 import { REPORT_STATUS_LABEL, REPORT_STATUS_TONE } from '../lib/status';
-import { Button, EmptyState, Select, Spinner, StatusBadge, Table, TBody, TD, TH, THead, TR } from '../components/ui';
+import { Button, EmptyState, Select, Spinner, StatusBadge, Table, TBody, TD, TH, THead, TR, useToast } from '../components/ui';
 import type { ReportStatus } from '../types/api';
 
 export function ReportsPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const [status, setStatus] = useState<ReportStatus | ''>('');
+
+  const startMutation = useMutation({
+    mutationFn: startCurrentReportInstance,
+    onSuccess: (newReport) => {
+      showToast('Relatório do mês atual iniciado com sucesso!', 'success');
+      queryClient.invalidateQueries({ queryKey: ['my-report-instances'] });
+      navigate(`/relatorios/${newReport.id}`);
+    },
+    onError: () => {
+      showToast('Não foi possível iniciar o relatório do mês atual.', 'error');
+    },
+  });
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['my-report-instances', user?.primaryUnitId, status],
@@ -36,6 +51,12 @@ export function ReportsPage() {
     );
   }, [reports, user]);
 
+  const hasCurrentMonthReport = useMemo(() => {
+    const now = new Date();
+    const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+    return reports.some((report) => report.referenceMonth.startsWith(currentMonthStr));
+  }, [reports]);
+
   return (
     <>
       <PageHeader
@@ -55,8 +76,30 @@ export function ReportsPage() {
               </p>
             </div>
             <Link to={`/relatorios/${actionableReport.id}`}>
-              <Button>Abrir relatório</Button>
+              <Button>
+                {actionableReport.status === 'PENDENTE' && user?.role === 'ELABORADOR'
+                  ? 'Iniciar elaboração'
+                  : actionableReport.status === 'EM_REVISAO' && user?.role === 'REVISOR'
+                  ? 'Revisar relatório'
+                  : 'Abrir relatório'}
+              </Button>
             </Link>
+          </div>
+        )}
+
+        {!actionableReport && user?.role === 'ELABORADOR' && !hasCurrentMonthReport && !isLoading && !isError && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-accent/40 bg-accent/10 px-5 py-4">
+            <div>
+              <p className="text-sm font-medium text-accent-ink">
+                Nenhum relatório aberto para o mês atual.
+              </p>
+              <p className="text-xs text-ink-muted">
+                Você pode iniciar o lançamento de dados para o período vigente agora mesmo.
+              </p>
+            </div>
+            <Button isLoading={startMutation.isPending} onClick={() => startMutation.mutate()}>
+              Criar relatório do mês atual
+            </Button>
           </div>
         )}
 
@@ -103,9 +146,19 @@ export function ReportsPage() {
                   <TD className="data-figure text-sm">{formatDateTime(report.submittedForReviewAt)}</TD>
                   <TD className="data-figure text-sm">{formatDateTime(report.submittedForApprovalAt)}</TD>
                   <TD>
-                    <Link to={`/relatorios/${report.id}`} className="text-sm font-medium text-accent-ink hover:underline">
-                      Ver
-                    </Link>
+                    {report.status === 'PENDENTE' && user?.role === 'ELABORADOR' ? (
+                      <Link to={`/relatorios/${report.id}`}>
+                        <Button size="sm">Elaborar</Button>
+                      </Link>
+                    ) : report.status === 'EM_REVISAO' && user?.role === 'REVISOR' ? (
+                      <Link to={`/relatorios/${report.id}`}>
+                        <Button size="sm" variant="secondary">Revisar</Button>
+                      </Link>
+                    ) : (
+                      <Link to={`/relatorios/${report.id}`} className="text-sm font-medium text-accent-ink hover:underline">
+                        Ver
+                      </Link>
+                    )}
                   </TD>
                 </TR>
               ))}

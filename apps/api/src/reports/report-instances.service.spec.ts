@@ -5,11 +5,14 @@ import { UnitAccessService } from '../common/services/unit-access.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ReportInstancesService } from './report-instances.service';
+import { ReportLifecycleService } from '../lifecycle/report-lifecycle.service';
 
 describe('ReportInstancesService', () => {
   let service: ReportInstancesService;
+  let openPeriodForUnitMock: jest.Mock;
   let findManyMock: jest.Mock;
   let findUniqueMock: jest.Mock;
+  let findUniqueUnitMock: jest.Mock;
   let updateMock: jest.Mock;
   let updateManyMock: jest.Mock;
   let transactionMock: jest.Mock;
@@ -43,9 +46,12 @@ describe('ReportInstancesService', () => {
     assertReadAccessMock = jest.fn();
     notifySubmittedForReviewMock = jest.fn();
     notifySubmittedForApprovalMock = jest.fn();
+    openPeriodForUnitMock = jest.fn();
+    findUniqueUnitMock = jest.fn();
 
     const prisma = {
       reportInstance: { findMany: findManyMock, findUnique: findUniqueMock, update: updateMock },
+      unit: { findUnique: findUniqueUnitMock },
       runWithAuditActor: transactionMock,
     } as unknown as PrismaService;
 
@@ -60,7 +66,11 @@ describe('ReportInstancesService', () => {
       notifySubmittedForApproval: notifySubmittedForApprovalMock,
     } as unknown as NotificationsService;
 
-    service = new ReportInstancesService(prisma, unitAccessService, notificationsService);
+    const reportLifecycleService = {
+      openPeriodForUnit: openPeriodForUnitMock,
+    } as unknown as ReportLifecycleService;
+
+    service = new ReportInstancesService(prisma, unitAccessService, notificationsService, reportLifecycleService);
   });
 
   describe('findAllForUser', () => {
@@ -171,6 +181,38 @@ describe('ReportInstancesService', () => {
         data: { status: ReportStatus.PENDENTE_APROVACAO, submittedForApprovalAt: expect.any(Date) },
       });
       expect(notifySubmittedForApprovalMock).toHaveBeenCalled();
+    });
+  });
+
+  describe('startCurrentPeriodForElaborador', () => {
+    test('throws NotFoundException if the user primary unit is not found', async () => {
+      findUniqueUnitMock.mockResolvedValue(null);
+
+      await expect(service.startCurrentPeriodForElaborador(elaborador)).rejects.toThrow(NotFoundException);
+    });
+
+    test('throws BadRequestException if the unit is inactive', async () => {
+      findUniqueUnitMock.mockResolvedValue({ id: 'unit-1', isActive: false });
+
+      await expect(service.startCurrentPeriodForElaborador(elaborador)).rejects.toThrow(BadRequestException);
+    });
+
+    test('throws BadRequestException if the unit does not have a form template', async () => {
+      findUniqueUnitMock.mockResolvedValue({ id: 'unit-1', isActive: true, formTemplateId: null });
+
+      await expect(service.startCurrentPeriodForElaborador(elaborador)).rejects.toThrow(BadRequestException);
+    });
+
+    test('opens the period for the unit and returns the created report instance', async () => {
+      const mockUnit = { id: 'unit-1', isActive: true, formTemplateId: 'template-1' };
+      findUniqueUnitMock.mockResolvedValue(mockUnit);
+      openPeriodForUnitMock.mockResolvedValue({ id: 'report-new', status: ReportStatus.PENDENTE });
+
+      const result = await service.startCurrentPeriodForElaborador(elaborador);
+
+      expect(findUniqueUnitMock).toHaveBeenCalledWith({ where: { id: 'unit-1' } });
+      expect(openPeriodForUnitMock).toHaveBeenCalledWith(mockUnit, expect.any(Date));
+      expect(result).toEqual({ id: 'report-new', status: ReportStatus.PENDENTE });
     });
   });
 });

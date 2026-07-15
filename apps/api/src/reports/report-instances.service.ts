@@ -4,6 +4,7 @@ import { AuthenticatedUser } from '../auth/types/authenticated-user.interface';
 import { UnitAccessService } from '../common/services/unit-access.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { ReportLifecycleService } from '../lifecycle/report-lifecycle.service';
 import { ListReportInstancesQueryDto } from './dto/list-report-instances-query.dto';
 
 @Injectable()
@@ -12,7 +13,32 @@ export class ReportInstancesService {
     private readonly prisma: PrismaService,
     private readonly unitAccessService: UnitAccessService,
     private readonly notificationsService: NotificationsService,
+    private readonly reportLifecycleService: ReportLifecycleService,
   ) {}
+
+  async startCurrentPeriodForElaborador(user: AuthenticatedUser) {
+    const unit = await this.prisma.unit.findUnique({
+      where: { id: user.primaryUnitId },
+    });
+    if (!unit) {
+      throw new NotFoundException('Unidade do usuario nao encontrada');
+    }
+    if (!unit.isActive) {
+      throw new BadRequestException('Unidade inativa');
+    }
+    if (!unit.formTemplateId) {
+      throw new BadRequestException('Unidade nao possui formulario associado');
+    }
+
+    const now = new Date();
+    const currentMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+
+    const report = await this.reportLifecycleService.openPeriodForUnit(unit, currentMonth);
+    if (!report) {
+      throw new BadRequestException('Nao foi possivel iniciar o relatorio para a unidade');
+    }
+    return report;
+  }
 
   // Painel Central (Secao 5 do PROMPT.md): filtros por unidade, periodo,
   // status, busca global por sigla/nome da unidade, e ordenacao por
@@ -54,6 +80,11 @@ export class ReportInstancesService {
           include: {
             evidenceFiles: { where: { isActive: true } },
             validationRecords: { orderBy: { createdAt: 'asc' } },
+            formIndicator: {
+              include: {
+                formTopic: true,
+              },
+            },
           },
           orderBy: { createdAt: 'asc' },
         },

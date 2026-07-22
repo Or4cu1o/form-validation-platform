@@ -56,39 +56,39 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-screen">
-      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-console px-16 py-14 text-white lg:flex">
+      <div className="relative hidden w-1/2 flex-col justify-between items-center overflow-hidden bg-console px-6 py-12 text-white lg:flex">
         <div className="blueprint-grid pointer-events-none absolute inset-0" aria-hidden="true" />
         <div
           className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-accent/20 blur-3xl"
           aria-hidden="true"
         />
 
-        <img
-          src={brand.logo.dark}
-          alt={`${brand.organizationName} — ${brand.departmentFullName}`}
-          className="relative h-10 w-auto object-contain"
-        />
+        <div className="my-auto flex w-full max-w-2xl flex-col items-center">
+          <img
+            src={brand.logo.dark}
+            alt={`${brand.organizationName} — ${brand.departmentFullName}`}
+            className="relative w-full h-auto object-contain mb-0"
+          />
 
-        <div className="relative max-w-lg">
-          <h1 className="font-display text-display-lg font-bold leading-[1.05] text-white">
-            Governança de indicadores, do lançamento à aprovação final.
+          <h1 className="font-display text-display-lg font-bold leading-[1.05] text-white text-center w-full -mt-4">
+            {brand.systemName}
           </h1>
-          <p className="mt-6 max-w-md text-[15px] leading-relaxed text-white/60">{brand.systemPurposeShort}</p>
+          <p className="mt-6 w-full text-[15px] leading-relaxed text-white/60 text-left">{brand.systemPurposeShort}</p>
         </div>
 
-        <p className="relative text-xs text-white/40">{brand.copyrightLine}</p>
+        <p className="relative text-xs text-white/40 text-center">{brand.copyrightLine}</p>
       </div>
 
       <div className="flex w-full flex-1 items-center justify-center bg-paper px-6 py-12 lg:w-1/2">
         <form
           onSubmit={handleSubmit}
-          className="w-full max-w-sm animate-rise-in rounded-lg border border-border bg-paper-raised p-8 shadow-raised"
+          className="w-full max-w-sm animate-rise-in rounded-xl border border-console-border bg-console-raised p-8 shadow-floating text-white"
         >
-          <h2 className="font-display text-display-sm font-semibold text-ink">Entrar</h2>
-          <p className="mt-1.5 text-sm text-ink-muted">Acesse com sua matrícula ou e-mail institucional.</p>
+          <h2 className="font-display text-display-sm font-semibold text-white">Entrar</h2>
+          <p className="mt-1.5 text-sm text-white/70">Acesse com sua matrícula ou e-mail institucional.</p>
 
           <div className="mt-8 flex flex-col gap-5">
-            <Field label="Matrícula ou e-mail" htmlFor="identifier" required>
+            <Field label="Matrícula ou e-mail" htmlFor="identifier" required className="[&>label]:!text-white">
               <Input
                 id="identifier"
                 name="identifier"
@@ -96,10 +96,11 @@ export function LoginPage() {
                 value={identifier}
                 onChange={(event) => setIdentifier(event.target.value)}
                 hasError={Boolean(error)}
+                className="!bg-console !text-white !border-console-border focus:!border-accent-400 placeholder:!text-white/40"
               />
             </Field>
 
-            <Field label="Senha" htmlFor="password" required>
+            <Field label="Senha" htmlFor="password" required className="[&>label]:!text-white">
               <Input
                 id="password"
                 name="password"
@@ -108,6 +109,7 @@ export function LoginPage() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 hasError={Boolean(error)}
+                className="!bg-console !text-white !border-console-border focus:!border-accent-400 placeholder:!text-white/40"
               />
             </Field>
 
@@ -117,7 +119,11 @@ export function LoginPage() {
               </p>
             )}
 
-            <Button type="submit" isLoading={isSubmitting} className="mt-2 w-full">
+            <Button
+              type="submit"
+              isLoading={isSubmitting}
+              className="mt-2 w-full bg-accent-500 hover:bg-accent-400 active:bg-accent-600 text-white font-semibold shadow-md border-0"
+            >
               Entrar
             </Button>
           </div>

@@ -42,15 +42,15 @@ export function Modal({ isOpen, onClose, title, children, footer, className }: P
         aria-labelledby="modal-title"
         tabIndex={-1}
         className={cn(
-          'relative z-10 w-full max-w-lg animate-scale-in rounded-lg border border-border bg-paper-raised p-6 shadow-floating',
+          'relative z-10 flex max-h-[85vh] w-full max-w-lg animate-scale-in flex-col rounded-lg border border-border bg-paper-raised shadow-floating',
           className,
         )}
       >
-        <h2 id="modal-title" className="font-display text-display-sm font-medium text-ink">
+        <h2 id="modal-title" className="shrink-0 px-6 pt-6 font-display text-display-sm font-medium text-ink">
           {title}
         </h2>
-        <div className="mt-5 border-t border-border pt-5">{children}</div>
-        {footer && <div className="mt-6 flex justify-end gap-3 border-t border-border pt-5">{footer}</div>}
+        <div className="mt-5 flex-1 overflow-y-auto border-t border-border px-6 pb-6 pt-5">{children}</div>
+        {footer && <div className="mt-6 flex shrink-0 justify-end gap-3 border-t border-border px-6 py-5">{footer}</div>}
       </div>
     </div>,
     document.body,

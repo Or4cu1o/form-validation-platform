@@ -59,39 +59,42 @@ export function UserFormModal({ isOpen, onClose, units, user }: Props) {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Editar usuário' : 'Novo usuário'}>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Matrícula" htmlFor="matricula" required>
-            <Input id="matricula" value={matricula} onChange={(event) => setMatricula(event.target.value)} />
-          </Field>
-          <Field label="E-mail" htmlFor="email" required>
-            <Input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
-          </Field>
-          <Field label="Nome" htmlFor="nome" required>
-            <Input id="nome" value={nome} onChange={(event) => setNome(event.target.value)} />
-          </Field>
-          <Field label="Sobrenome" htmlFor="sobrenome" required>
-            <Input id="sobrenome" value={sobrenome} onChange={(event) => setSobrenome(event.target.value)} />
-          </Field>
-          <Field label="Role" htmlFor="role" required>
-            <Select id="role" value={role} onChange={(event) => setRole(event.target.value as RoleName)}>
-              {ROLES.map((value) => (
-                <option key={value} value={value}>
-                  {ROLE_LABEL[value]}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="Unidade primária" htmlFor="primaryUnitId" required>
-            <Select id="primaryUnitId" value={primaryUnitId} onChange={(event) => setPrimaryUnitId(event.target.value)}>
-              {units.map((unit) => (
-                <option key={unit.id} value={unit.id}>
-                  {unit.sigla}
-                </option>
-              ))}
-            </Select>
-          </Field>
-        </div>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        <Field label="Matrícula" htmlFor="matricula" required>
+          <Input id="matricula" value={matricula} onChange={(event) => setMatricula(event.target.value)} />
+        </Field>
+
+        <Field label="E-mail" htmlFor="email" required>
+          <Input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
+        </Field>
+
+        <Field label="Nome" htmlFor="nome" required>
+          <Input id="nome" value={nome} onChange={(event) => setNome(event.target.value)} />
+        </Field>
+
+        <Field label="Sobrenome" htmlFor="sobrenome" required>
+          <Input id="sobrenome" value={sobrenome} onChange={(event) => setSobrenome(event.target.value)} />
+        </Field>
+
+        <Field label="Role" htmlFor="role" required>
+          <Select id="role" value={role} onChange={(event) => setRole(event.target.value as RoleName)}>
+            {ROLES.map((value) => (
+              <option key={value} value={value}>
+                {ROLE_LABEL[value]}
+              </option>
+            ))}
+          </Select>
+        </Field>
+
+        <Field label="Unidade primária" htmlFor="primaryUnitId" required>
+          <Select id="primaryUnitId" value={primaryUnitId} onChange={(event) => setPrimaryUnitId(event.target.value)}>
+            {units.map((unit) => (
+              <option key={unit.id} value={unit.id}>
+                {unit.sigla}
+              </option>
+            ))}
+          </Select>
+        </Field>
 
         {!isEditing && (
           <Field label="Senha provisória" htmlFor="password" required hint={`Mínimo de ${MIN_PASSWORD_LENGTH} caracteres.`}>

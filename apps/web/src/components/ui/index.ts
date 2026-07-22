@@ -9,3 +9,4 @@ export * from './Table';
 export * from './Toast';
 export * from './EmptyState';
 export * from './Spinner';
+export * from './ProgressMeter';

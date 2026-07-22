@@ -6,6 +6,19 @@ import { ApiError } from '../lib/api-error';
 import { Button, Field, Input } from '../components/ui';
 import { brand } from '../config/brand';
 
+/**
+ * A API retorna algumas mensagens de erro sem acentuação. Normalizamos aqui
+ * (camada de apresentação) para manter o padrão de português correto do
+ * restante do produto, sem depender de uma mudança de contrato da API.
+ */
+const ERROR_MESSAGE_OVERRIDES: Record<string, string> = {
+  'Credenciais invalidas': 'Credenciais inválidas.',
+};
+
+function displayErrorMessage(message: string): string {
+  return ERROR_MESSAGE_OVERRIDES[message] ?? message;
+}
+
 export function LoginPage() {
   const { user, login } = useAuth();
   const navigate = useNavigate();
@@ -35,7 +48,7 @@ export function LoginPage() {
       await login(identifier.trim(), password);
       navigate('/', { replace: true });
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : 'Não foi possível entrar. Tente novamente.');
+      setError(caught instanceof ApiError ? displayErrorMessage(caught.message) : 'Não foi possível entrar. Tente novamente.');
     } finally {
       setIsSubmitting(false);
     }

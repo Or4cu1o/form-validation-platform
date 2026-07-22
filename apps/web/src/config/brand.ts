@@ -130,10 +130,13 @@ export const brand: BrandConfig = {
     consoleRaised: '#142235',
     consoleBorder: '#24374d',
 
+    // Roxo dedicado — nunca reutilizado em nenhum outro papel semântico da
+    // paleta — para que "pendente de aprovação" não se confunda com o azul
+    // primário de marca (usado em botões, links e navegação ativa).
     status: {
       pendente: '#64748b',
       revisao: '#a16207',
-      aprovacao: '#00549a',
+      aprovacao: '#6d28d9',
       concluido: '#15803d',
       reprovado: '#b91c1c',
     },

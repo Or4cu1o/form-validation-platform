@@ -84,7 +84,7 @@ export function IndicatorFormModal({ isOpen, onClose, templateId, topicId, indic
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Editar indicador' : 'Novo indicador'} className="max-w-2xl">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Field label="Título" htmlFor="title" required>
           <Input id="title" value={title} onChange={(event) => setTitle(event.target.value)} />
         </Field>
@@ -122,25 +122,25 @@ export function IndicatorFormModal({ isOpen, onClose, templateId, topicId, indic
           />
         </Field>
 
-        <div className="grid grid-cols-3 gap-4">
-          <Field label="Operador da meta" htmlFor="goalOperator" required>
-            <Select id="goalOperator" value={goalOperator} onChange={(event) => setGoalOperator(event.target.value as GoalOperator)}>
-              {GOAL_OPERATORS.map((value) => (
-                <option key={value} value={value}>
-                  {GOAL_OPERATOR_SYMBOL[value]}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="Valor da meta" htmlFor="goalValue" required>
-            <Input id="goalValue" type="number" step="any" value={goalValue} onChange={(event) => setGoalValue(event.target.value)} className="data-figure" />
-          </Field>
-          <Field label="Ordem" htmlFor="order">
-            <Input id="order" type="number" min={0} value={order} onChange={(event) => setOrder(event.target.value)} />
-          </Field>
-        </div>
+        <Field label="Operador da meta" htmlFor="goalOperator" required>
+          <Select id="goalOperator" value={goalOperator} onChange={(event) => setGoalOperator(event.target.value as GoalOperator)}>
+            {GOAL_OPERATORS.map((value) => (
+              <option key={value} value={value}>
+                {GOAL_OPERATOR_SYMBOL[value]}
+              </option>
+            ))}
+          </Select>
+        </Field>
 
-        <label className="flex items-center gap-2 text-sm text-ink-muted">
+        <Field label="Valor da meta" htmlFor="goalValue" required>
+          <Input id="goalValue" type="number" step="any" value={goalValue} onChange={(event) => setGoalValue(event.target.value)} className="data-figure max-w-xs" />
+        </Field>
+
+        <Field label="Ordem" htmlFor="order" hint="Posição do indicador dentro do tópico (menor aparece primeiro).">
+          <Input id="order" type="number" min={0} value={order} onChange={(event) => setOrder(event.target.value)} className="max-w-xs" />
+        </Field>
+
+        <label className="flex items-center gap-2.5 text-sm text-ink-muted">
           <input
             type="checkbox"
             checked={isResidentState}

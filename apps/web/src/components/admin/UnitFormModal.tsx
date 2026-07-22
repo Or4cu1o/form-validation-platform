@@ -52,21 +52,20 @@ export function UnitFormModal({ isOpen, onClose, formTemplates, unit }: Props) {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Editar unidade' : 'Nova unidade'}>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Sigla" htmlFor="sigla" required>
-            <Input id="sigla" value={sigla} onChange={(event) => setSigla(event.target.value)} />
-          </Field>
-          <Field label="Nível do relatório" htmlFor="level" required>
-            <Select id="level" value={level} onChange={(event) => setLevel(event.target.value as UnitLevel)}>
-              {LEVELS.map((value) => (
-                <option key={value} value={value}>
-                  {UNIT_LEVEL_LABEL[value]}
-                </option>
-              ))}
-            </Select>
-          </Field>
-        </div>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        <Field label="Sigla" htmlFor="sigla" required>
+          <Input id="sigla" value={sigla} onChange={(event) => setSigla(event.target.value)} />
+        </Field>
+
+        <Field label="Nível do relatório" htmlFor="level" required>
+          <Select id="level" value={level} onChange={(event) => setLevel(event.target.value as UnitLevel)}>
+            {LEVELS.map((value) => (
+              <option key={value} value={value}>
+                {UNIT_LEVEL_LABEL[value]}
+              </option>
+            ))}
+          </Select>
+        </Field>
 
         <Field label="Nome" htmlFor="nome" required>
           <Input id="nome" value={nome} onChange={(event) => setNome(event.target.value)} />

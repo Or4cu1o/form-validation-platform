@@ -58,8 +58,8 @@ export function AppShell() {
   const visibleItems = NAV_ITEMS.filter((item) => item.roles.includes(user.role));
 
   return (
-    <div className="flex min-h-screen bg-paper">
-      <aside className="flex w-72 shrink-0 flex-col bg-console text-white">
+    <div className="flex h-screen overflow-hidden bg-paper">
+      <aside className="flex w-72 shrink-0 flex-col overflow-y-auto bg-console text-white">
         <div className="flex items-center gap-3 border-b border-console-border px-6 py-6">
           <span
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-accent text-sm font-bold tracking-tight text-accent-ink"
@@ -125,8 +125,8 @@ export function AppShell() {
         </div>
       </aside>
 
-      <main className="flex flex-1 flex-col justify-between overflow-y-auto">
-        <div className="flex-1">
+      <main className="flex min-h-0 flex-1 flex-col justify-between overflow-y-auto">
+        <div className="mx-auto w-full max-w-[1600px] flex-1">
           <Outlet />
         </div>
         <footer className="border-t border-border bg-paper-raised px-8 py-4 text-center text-xs text-ink-faint">

@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { getReportInstance, submitForApproval, submitForReview } from '../api/reports';
 import { formatDateTime, formatReferenceMonth } from '../lib/format';
 import { REPORT_STATUS_LABEL, REPORT_STATUS_TONE } from '../lib/status';
-import { Button, EmptyState, Spinner, StatusBadge, useToast } from '../components/ui';
+import { Button, EmptyState, ProgressMeter, Spinner, StatusBadge, useToast } from '../components/ui';
 
 export function ReportDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -88,6 +88,9 @@ export function ReportDetailPage() {
   const isEditable = canSubmitForReview || canSubmitForApproval;
   const wasReproved = report.status === 'EM_REVISAO' && report.reprovalCount > 0;
 
+  const allResponses = report.indicatorResponses ?? [];
+  const filledCount = allResponses.filter((response) => response.calculatedValue !== null).length;
+
   return (
     <>
       <PageHeader
@@ -95,7 +98,8 @@ export function ReportDetailPage() {
         title={`${report.unit.sigla} · ${formatReferenceMonth(report.referenceMonth)}`}
         description={report.unit.nome}
         actions={
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            <ProgressMeter completed={filledCount} total={allResponses.length} label="indicadores preenchidos" />
             <StatusBadge tone={REPORT_STATUS_TONE[report.status]} label={REPORT_STATUS_LABEL[report.status]} />
             {canSubmitForReview && (
               <Button isLoading={submitReviewMutation.isPending} onClick={() => submitReviewMutation.mutate()}>

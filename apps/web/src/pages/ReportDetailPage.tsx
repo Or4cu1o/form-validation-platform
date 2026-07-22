@@ -9,6 +9,7 @@ import { getReportInstance, submitForApproval, submitForReview } from '../api/re
 import { formatDateTime, formatReferenceMonth } from '../lib/format';
 import { REPORT_STATUS_LABEL, REPORT_STATUS_TONE } from '../lib/status';
 import { Button, EmptyState, ProgressMeter, Spinner, StatusBadge, useToast } from '../components/ui';
+import type { ProgressMeterSegment } from '../components/ui';
 
 export function ReportDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -89,7 +90,15 @@ export function ReportDetailPage() {
   const wasReproved = report.status === 'EM_REVISAO' && report.reprovalCount > 0;
 
   const allResponses = report.indicatorResponses ?? [];
-  const filledCount = allResponses.filter((response) => response.calculatedValue !== null).length;
+  const filledResponses = allResponses.filter((response) => response.calculatedValue !== null);
+  const compliantCount = filledResponses.filter((response) => response.isCompliant === true).length;
+  const nonCompliantCount = filledResponses.filter((response) => response.isCompliant === false).length;
+  const neutralFilledCount = filledResponses.length - compliantCount - nonCompliantCount;
+  const progressSegments: ProgressMeterSegment[] = [
+    { key: 'conforme', count: compliantCount, label: 'dentro da meta', toneClassName: 'bg-status-concluido' },
+    { key: 'fora-meta', count: nonCompliantCount, label: 'fora da meta', toneClassName: 'bg-status-reprovado' },
+    { key: 'preenchido', count: neutralFilledCount, label: 'preenchidos', toneClassName: 'bg-accent' },
+  ];
 
   return (
     <>
@@ -99,7 +108,7 @@ export function ReportDetailPage() {
         description={report.unit.nome}
         actions={
           <div className="flex items-center gap-4">
-            <ProgressMeter completed={filledCount} total={allResponses.length} label="indicadores preenchidos" />
+            <ProgressMeter segments={progressSegments} total={allResponses.length} label="indicadores preenchidos" />
             <StatusBadge tone={REPORT_STATUS_TONE[report.status]} label={REPORT_STATUS_LABEL[report.status]} />
             {canSubmitForReview && (
               <Button isLoading={submitReviewMutation.isPending} onClick={() => submitReviewMutation.mutate()}>

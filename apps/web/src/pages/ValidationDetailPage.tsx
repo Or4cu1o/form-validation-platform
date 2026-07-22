@@ -8,6 +8,7 @@ import { finalizeReportInstance, getReportInstance } from '../api/reports';
 import { formatReferenceMonth } from '../lib/format';
 import { REPORT_STATUS_LABEL, REPORT_STATUS_TONE } from '../lib/status';
 import { Button, EmptyState, ProgressMeter, Spinner, StatusBadge, useToast } from '../components/ui';
+import type { ProgressMeterSegment } from '../components/ui';
 
 export function ValidationDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -80,7 +81,14 @@ export function ValidationDetailPage() {
   const isValidatable = report.status === 'PENDENTE_APROVACAO' && user.role === 'APROVADOR';
   const hasPendingValidation = responses.some((response) => response.validationStatus === 'PENDENTE_VALIDACAO');
   const canFinalize = isValidatable && responses.length > 0 && !hasPendingValidation;
-  const validatedCount = responses.filter((response) => response.validationStatus !== 'PENDENTE_VALIDACAO').length;
+  const aprovadoCount = responses.filter((response) => response.validationStatus === 'APROVADO').length;
+  const reprovadoCount = responses.filter((response) => response.validationStatus === 'REPROVADO').length;
+  const emRevisaoCount = responses.filter((response) => response.validationStatus === 'EM_REVISAO').length;
+  const progressSegments: ProgressMeterSegment[] = [
+    { key: 'aprovado', count: aprovadoCount, label: 'aprovados', toneClassName: 'bg-status-concluido' },
+    { key: 'reprovado', count: reprovadoCount, label: 'reprovados', toneClassName: 'bg-status-reprovado' },
+    { key: 'em-revisao', count: emRevisaoCount, label: 'em revisão', toneClassName: 'bg-status-revisao' },
+  ];
 
   return (
     <>
@@ -90,7 +98,7 @@ export function ValidationDetailPage() {
         description={report.unit.nome}
         actions={
           <div className="flex items-center gap-4">
-            <ProgressMeter completed={validatedCount} total={responses.length} label="indicadores validados" />
+            <ProgressMeter segments={progressSegments} total={responses.length} label="indicadores validados" />
             <StatusBadge tone={REPORT_STATUS_TONE[report.status]} label={REPORT_STATUS_LABEL[report.status]} />
             {isValidatable && (
               <Button

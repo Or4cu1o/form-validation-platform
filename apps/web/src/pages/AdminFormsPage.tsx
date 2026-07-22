@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PenSquare, Plus, Power, PowerOff } from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
+import { PageHeader } from '../components/layout/PageHeader';
 import { TemplateFormModal } from '../components/admin/forms/TemplateFormModal';
 import { FormTemplateDetail } from '../components/admin/forms/FormTemplateDetail';
 import { activateFormTemplate, deactivateFormTemplate, getFormTemplate, listFormTemplates } from '../api/forms';

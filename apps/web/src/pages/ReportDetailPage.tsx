@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle } from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
+import { PageHeader } from '../components/layout/PageHeader';
 import { IndicatorResponseCard } from '../components/report-detail/IndicatorResponseCard';
 import { useAuth } from '../context/AuthContext';
 import { getReportInstance, submitForApproval, submitForReview } from '../api/reports';

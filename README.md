@@ -6,7 +6,7 @@ legado baseado em planilhas/documentos manuais por um fluxo governado por prazos
 em dias úteis, trilha de auditoria e um motor de formulários dinâmicos
 administrável sem código.
 
-Consulte [`PROMPT.md`](./PROMPT.md) para a especificação de requisitos completa
+Consulte [`docs/PROMPT.md`](./docs/PROMPT.md) para a especificação de requisitos completa
 que orientou o desenho do produto.
 
 ## Stack

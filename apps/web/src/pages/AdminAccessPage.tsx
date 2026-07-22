@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { PageHeader } from '../components/PageHeader';
-import { UsersPanel } from '../components/admin/UsersPanel';
-import { UnitsPanel } from '../components/admin/UnitsPanel';
+import { PageHeader } from '../components/layout/PageHeader';
+import { UsersPanel } from '../components/admin/access/UsersPanel';
+import { UnitsPanel } from '../components/admin/access/UnitsPanel';
 import { cn } from '../lib/cn';
 
 type Tab = 'users' | 'units';

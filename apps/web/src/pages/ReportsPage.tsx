@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { PageHeader } from '../components/PageHeader';
+import { PageHeader } from '../components/layout/PageHeader';
 import { useAuth } from '../context/AuthContext';
 import { listReportInstances, startCurrentReportInstance } from '../api/reports';
 import { formatDateTime, formatReferenceMonth } from '../lib/format';

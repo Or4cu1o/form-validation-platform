@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { PageHeader } from '../components/PageHeader';
+import { PageHeader } from '../components/layout/PageHeader';
 import { ValidationIndicatorCard } from '../components/validation/ValidationIndicatorCard';
 import { useAuth } from '../context/AuthContext';
 import { finalizeReportInstance, getReportInstance } from '../api/reports';

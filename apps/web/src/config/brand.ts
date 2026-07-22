@@ -10,10 +10,20 @@
  */
 
 export interface BrandLogoAssets {
-  /** Logo para uso sobre fundos claros (paper). */
-  light: string;
-  /** Logo para uso sobre fundos escuros (console/sidebar, login). */
+  /**
+   * Logo para uso sobre fundos escuros (console/sidebar, login) — único
+   * asset de logo fornecido pela organização hoje.
+   */
   dark: string;
+  /**
+   * Logo para uso sobre fundos claros (paper). Ainda não existe um asset
+   * dedicado para fundo claro — deliberadamente ausente (em vez de
+   * duplicar `dark`, o que produziria um logo branco invisível sobre
+   * fundo claro). Componentes que precisarem de um logo sobre fundo claro
+   * devem tratar `undefined` (ex.: recuar para texto/monograma) até que a
+   * organização forneça essa variante.
+   */
+  light?: string;
   favicon: string;
 }
 
@@ -95,7 +105,6 @@ export const brand: BrandConfig = {
   systemPurposeShort:
     'Elaboração, revisão e validação de relatórios com trilha de auditoria completa, do lançamento à aprovação final.',
   logo: {
-    light: '/logo-agir-branco.png',
     dark: '/logo-agir-branco.png',
     favicon: '/favicon.ico',
   },

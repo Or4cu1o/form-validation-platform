@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { PageHeader } from '../components/PageHeader';
+import { PageHeader } from '../components/layout/PageHeader';
 import { useAuth } from '../context/AuthContext';
 import { listReportInstances } from '../api/reports';
 import { exportReportInstance } from '../api/export';

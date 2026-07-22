@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { AppShell } from './components/AppShell';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import { AppShell } from './components/layout/AppShell';
+import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { AdminAccessPage } from './pages/AdminAccessPage';
 import { AdminFormsPage } from './pages/AdminFormsPage';

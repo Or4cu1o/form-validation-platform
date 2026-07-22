@@ -46,7 +46,7 @@ export function Modal({ isOpen, onClose, title, children, footer, className }: P
           className,
         )}
       >
-        <h2 id="modal-title" className="shrink-0 px-6 pt-6 font-display text-display-sm font-medium text-ink">
+        <h2 id="modal-title" className="shrink-0 px-6 pt-6 font-display text-display-sm font-semibold text-ink">
           {title}
         </h2>
         <div className="mt-5 flex-1 overflow-y-auto border-t border-border px-6 pb-6 pt-5">{children}</div>

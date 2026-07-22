@@ -131,7 +131,7 @@ function StatusOverview({ reports }: { reports: ReportInstance[] }) {
   return (
     <div className="flex flex-wrap items-stretch gap-x-10 gap-y-4 border-b border-border bg-paper-raised px-8 py-6">
       <div className="pr-10">
-        <p className="font-display text-display text-ink">{reports.length}</p>
+        <p className="font-display text-display font-semibold text-ink">{reports.length}</p>
         <p className="mt-1 text-xs font-medium uppercase tracking-wide text-ink-faint">Relatórios no período</p>
       </div>
       {statuses.map((statusKey, index) => (

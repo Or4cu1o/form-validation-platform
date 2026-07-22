@@ -52,7 +52,11 @@ export default {
         },
       },
       fontFamily: {
-        display: ['"Newsreader"', 'ui-serif', 'Georgia', 'serif'],
+        // Inter também para títulos/display: a hierarquia vem de peso
+        // (font-semibold/font-bold) e escala de tamanho, não de uma segunda
+        // família serifada — decisão de design revisada após avaliação
+        // visual direta do produto (ver histórico de iteração).
+        display: ['"Inter"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         sans: ['"Inter"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },

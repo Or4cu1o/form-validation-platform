@@ -63,18 +63,14 @@ export function LoginPage() {
           aria-hidden="true"
         />
 
-        <div className="relative flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded bg-accent text-sm font-bold text-accent-ink">
-            {brand.departmentAcronym.charAt(0)}
-          </span>
-          <p className="font-display text-xl font-medium tracking-wide text-white">{brand.departmentAcronym}</p>
-        </div>
+        <img
+          src={brand.logo.dark}
+          alt={`${brand.organizationName} — ${brand.departmentFullName}`}
+          className="relative h-10 w-auto object-contain"
+        />
 
         <div className="relative max-w-lg">
-          <p className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-accent-200">
-            {brand.systemName}
-          </p>
-          <h1 className="font-display text-display-lg font-medium italic leading-[1.05] text-white">
+          <h1 className="font-display text-display-lg font-bold leading-[1.05] text-white">
             Governança de indicadores, do lançamento à aprovação final.
           </h1>
           <p className="mt-6 max-w-md text-[15px] leading-relaxed text-white/60">{brand.systemPurposeShort}</p>
@@ -88,7 +84,7 @@ export function LoginPage() {
           onSubmit={handleSubmit}
           className="w-full max-w-sm animate-rise-in rounded-lg border border-border bg-paper-raised p-8 shadow-raised"
         >
-          <h2 className="font-display text-display-sm font-medium text-ink">Entrar</h2>
+          <h2 className="font-display text-display-sm font-semibold text-ink">Entrar</h2>
           <p className="mt-1.5 text-sm text-ink-muted">Acesse com sua matrícula ou e-mail institucional.</p>
 
           <div className="mt-8 flex flex-col gap-5">

@@ -97,7 +97,7 @@ export function IndicatorResponseCard({ response, reportInstanceId, isEditable }
     <div className="rounded-lg border border-border bg-paper-raised p-7 shadow-panel transition-shadow duration-normal ease-out-expo hover:shadow-raised">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="font-display text-xl font-medium text-ink">{response.snapshotTitle}</h3>
+          <h3 className="font-display text-xl font-semibold text-ink">{response.snapshotTitle}</h3>
           <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-ink-muted">{response.snapshotObjective}</p>
         </div>
         <StatusBadge

@@ -132,7 +132,7 @@ export function ReportDetailPage() {
           <div key={group.title} className="flex flex-col gap-5">
             <div className="flex items-center gap-3 border-b border-border pb-3">
               <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
-              <h2 className="font-display text-xl font-medium text-ink">{group.title}</h2>
+              <h2 className="font-display text-xl font-semibold text-ink">{group.title}</h2>
             </div>
             <div className="flex flex-col gap-5">
               {group.responses.map((response) => (

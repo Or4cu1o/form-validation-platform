@@ -14,7 +14,7 @@ export function PageHeader({ eyebrow, title, description, actions }: Props) {
         {eyebrow && (
           <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-accent">{eyebrow}</p>
         )}
-        <h1 className="font-display text-display-sm font-medium text-ink">{title}</h1>
+        <h1 className="font-display text-display-sm font-semibold text-ink">{title}</h1>
         {description && <p className="mt-1.5 max-w-xl text-sm text-ink-muted">{description}</p>}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 pt-1">{actions}</div>}

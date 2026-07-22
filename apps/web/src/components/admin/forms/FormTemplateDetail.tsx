@@ -56,7 +56,7 @@ export function FormTemplateDetail({ template }: Props) {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-display text-lg font-medium text-ink">{template.name}</h2>
+          <h2 className="font-display text-lg font-semibold text-ink">{template.name}</h2>
           {template.description && <p className="text-sm text-ink-muted">{template.description}</p>}
         </div>
         <Button size="sm" onClick={() => setTopicModal({ type: 'create' })}>

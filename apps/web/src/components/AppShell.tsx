@@ -68,7 +68,7 @@ export function AppShell() {
             {brand.departmentAcronym.charAt(0)}
           </span>
           <div className="min-w-0">
-            <p className="truncate font-display text-lg font-medium tracking-wide text-white">
+            <p className="truncate font-display text-lg font-semibold tracking-wide text-white">
               {brand.departmentAcronym}
             </p>
             <p className="truncate text-[10px] uppercase tracking-[0.14em] text-white/50">

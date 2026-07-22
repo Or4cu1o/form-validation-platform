@@ -13,15 +13,19 @@ type Props = {
 
 export function Field({ label, htmlFor, error, hint, required, children, className }: Props) {
   return (
-    <div className={cn('flex flex-col gap-1.5', className)}>
-      <label htmlFor={htmlFor} className="text-sm font-medium text-ink-muted">
+    <div className={cn('flex flex-col gap-2', className)}>
+      <label htmlFor={htmlFor} className="text-sm font-semibold text-ink">
         {label}
-        {required && <span className="ml-0.5 text-status-reprovado">*</span>}
+        {required && (
+          <span className="ml-0.5 font-normal text-status-reprovado" aria-hidden="true">
+            *
+          </span>
+        )}
       </label>
+      {hint && !error && <p className="-mt-1 text-xs text-ink-muted">{hint}</p>}
       {children}
-      {hint && !error && <p className="text-xs text-ink-faint">{hint}</p>}
       {error && (
-        <p role="alert" className="text-xs text-status-reprovado">
+        <p role="alert" className="text-xs font-medium text-status-reprovado">
           {error}
         </p>
       )}

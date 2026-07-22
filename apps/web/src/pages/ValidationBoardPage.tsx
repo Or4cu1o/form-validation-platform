@@ -34,13 +34,14 @@ export function ValidationBoardPage() {
   return (
     <>
       <PageHeader
+        eyebrow="Contraprova técnica"
         title="Mesa de Validação Técnica"
         description="Progresso mais recente de cada unidade e fila de contraprova da Matriz."
       />
 
-      <div className="flex flex-col gap-5 p-8">
+      <div className="flex flex-col gap-6 p-8">
         {pendingApprovalCount > 0 && (
-          <div className="rounded-lg border border-accent/40 bg-accent/10 px-5 py-3 text-sm text-accent-ink">
+          <div className="rounded border-l-4 border-accent bg-accent-50 px-5 py-3 text-sm font-medium text-accent-900 shadow-xs">
             {pendingApprovalCount} unidade(s) aguardando contraprova da Matriz.
           </div>
         )}
@@ -89,7 +90,7 @@ export function ValidationBoardPage() {
                     <StatusBadge tone={REPORT_STATUS_TONE[report.status]} label={REPORT_STATUS_LABEL[report.status]} />
                   </TD>
                   <TD>
-                    <Link to={`/validacao/${report.id}`} className="text-sm font-medium text-accent-ink hover:underline">
+                    <Link to={`/validacao/${report.id}`} className="text-sm font-medium text-accent hover:text-accent-hover hover:underline">
                       {report.status === 'PENDENTE_APROVACAO' ? 'Validar' : 'Ver'}
                     </Link>
                   </TD>

@@ -84,6 +84,7 @@ export function ValidationDetailPage() {
   return (
     <>
       <PageHeader
+        eyebrow="Mesa de validação técnica"
         title={`${report.unit.sigla} · ${formatReferenceMonth(report.referenceMonth)}`}
         description={report.unit.nome}
         actions={
@@ -105,10 +106,11 @@ export function ValidationDetailPage() {
 
       <div className="flex flex-col gap-8 p-8">
         {groupedResponses.map((group) => (
-          <div key={group.title} className="flex flex-col gap-4">
-            <h2 className="font-display text-xl font-semibold text-ink border-b border-border pb-2">
-              {group.title}
-            </h2>
+          <div key={group.title} className="flex flex-col gap-5">
+            <div className="flex items-center gap-3 border-b border-border pb-3">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
+              <h2 className="font-display text-xl font-medium text-ink">{group.title}</h2>
+            </div>
             <div className="flex flex-col gap-5">
               {group.responses.map((response) => (
                 <ValidationIndicatorCard key={response.id} response={response} reportInstanceId={report.id} isValidatable={isValidatable} />

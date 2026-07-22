@@ -60,15 +60,16 @@ export function ReportsPage() {
   return (
     <>
       <PageHeader
+        eyebrow="Meu fluxo de trabalho"
         title="Elaboração e Revisão"
         description="Relatórios da sua unidade em aberto para lançamento de dados e revisão colaborativa."
       />
 
-      <div className="flex flex-col gap-5 p-8">
+      <div className="flex flex-col gap-6 p-8">
         {actionableReport && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-accent/40 bg-accent/10 px-5 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded border-l-4 border-accent bg-accent-50 px-5 py-4 shadow-xs">
             <div>
-              <p className="text-sm font-medium text-accent-ink">
+              <p className="text-sm font-medium text-accent-900">
                 Relatório de {formatReferenceMonth(actionableReport.referenceMonth)} aguarda sua ação.
               </p>
               <p className="text-xs text-ink-muted">
@@ -88,9 +89,9 @@ export function ReportsPage() {
         )}
 
         {!actionableReport && user?.role === 'ELABORADOR' && !hasCurrentMonthReport && !isLoading && !isError && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-accent/40 bg-accent/10 px-5 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded border-l-4 border-accent bg-accent-50 px-5 py-4 shadow-xs">
             <div>
-              <p className="text-sm font-medium text-accent-ink">
+              <p className="text-sm font-medium text-accent-900">
                 Nenhum relatório aberto para o mês atual.
               </p>
               <p className="text-xs text-ink-muted">
@@ -155,7 +156,7 @@ export function ReportsPage() {
                         <Button size="sm" variant="secondary">Revisar</Button>
                       </Link>
                     ) : (
-                      <Link to={`/relatorios/${report.id}`} className="text-sm font-medium text-accent-ink hover:underline">
+                      <Link to={`/relatorios/${report.id}`} className="text-sm font-medium text-accent hover:text-accent-hover hover:underline">
                         Ver
                       </Link>
                     )}

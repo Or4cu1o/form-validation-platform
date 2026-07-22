@@ -87,6 +87,7 @@ export function AdminFormsPage() {
   return (
     <>
       <PageHeader
+        eyebrow="Administração"
         title="Formulários"
         description="Engine no-code de templates, tópicos e indicadores. Alterações valem para relatórios futuros."
       />
@@ -108,8 +109,8 @@ export function AdminFormsPage() {
                 <div
                   key={template.id}
                   className={cn(
-                    'flex items-center justify-between rounded border px-3 py-2 text-sm',
-                    selectedId === template.id ? 'border-accent bg-accent/10' : 'border-border bg-paper-raised',
+                    'flex items-center justify-between rounded border px-3 py-2 text-sm transition-colors duration-fast ease-out-expo',
+                    selectedId === template.id ? 'border-accent bg-accent-50' : 'border-border bg-paper-raised hover:bg-paper-sunken',
                   )}
                 >
                   <button type="button" onClick={() => setSelectedId(template.id)} className="flex-1 truncate text-left text-ink">

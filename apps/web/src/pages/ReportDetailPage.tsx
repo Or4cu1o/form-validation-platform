@@ -91,6 +91,7 @@ export function ReportDetailPage() {
   return (
     <>
       <PageHeader
+        eyebrow="Elaboração e revisão"
         title={`${report.unit.sigla} · ${formatReferenceMonth(report.referenceMonth)}`}
         description={report.unit.nome}
         actions={
@@ -112,8 +113,8 @@ export function ReportDetailPage() {
 
       <div className="flex flex-col gap-8 p-8">
         {wasReproved && (
-          <div className="flex items-start gap-3 rounded-lg border border-accent/40 bg-accent/10 px-4 py-3 text-sm text-accent-ink">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <div className="flex items-start gap-3 rounded border-l-4 border-status-reprovado bg-status-reprovado/5 px-4 py-3 text-sm text-ink shadow-xs">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-status-reprovado" aria-hidden="true" />
             <p>
               Este relatório foi reprovado pela Matriz e retornou para revisão colaborativa.
               {report.slaExtensionDueDate && (
@@ -124,10 +125,11 @@ export function ReportDetailPage() {
         )}
 
         {groupedResponses.map((group) => (
-          <div key={group.title} className="flex flex-col gap-4">
-            <h2 className="font-display text-xl font-semibold text-ink border-b border-border pb-2">
-              {group.title}
-            </h2>
+          <div key={group.title} className="flex flex-col gap-5">
+            <div className="flex items-center gap-3 border-b border-border pb-3">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
+              <h2 className="font-display text-xl font-medium text-ink">{group.title}</h2>
+            </div>
             <div className="flex flex-col gap-5">
               {group.responses.map((response) => (
                 <IndicatorResponseCard key={response.id} response={response} reportInstanceId={report.id} isEditable={isEditable} />

@@ -3,7 +3,10 @@ import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import { ToastProvider } from './components/ui';
+import { brand } from './config/brand';
 import './index.css';
+
+document.title = `${brand.departmentAcronym} — ${brand.departmentFullName}`;
 
 const queryClient = new QueryClient({
   defaultOptions: {

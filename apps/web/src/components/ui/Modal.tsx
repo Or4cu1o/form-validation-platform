@@ -28,7 +28,7 @@ export function Modal({ isOpen, onClose, title, children, footer, className }: P
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-console/40 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-console/50 p-4 backdrop-blur-[2px]">
       <button
         type="button"
         aria-label="Fechar"
@@ -42,15 +42,15 @@ export function Modal({ isOpen, onClose, title, children, footer, className }: P
         aria-labelledby="modal-title"
         tabIndex={-1}
         className={cn(
-          'relative z-10 w-full max-w-lg rounded-lg bg-paper-raised p-6 shadow-floating',
+          'relative z-10 w-full max-w-lg animate-scale-in rounded-lg border border-border bg-paper-raised p-6 shadow-floating',
           className,
         )}
       >
-        <h2 id="modal-title" className="font-display text-display-sm text-ink">
+        <h2 id="modal-title" className="font-display text-display-sm font-medium text-ink">
           {title}
         </h2>
-        <div className="mt-4">{children}</div>
-        {footer && <div className="mt-6 flex justify-end gap-3">{footer}</div>}
+        <div className="mt-5 border-t border-border pt-5">{children}</div>
+        {footer && <div className="mt-6 flex justify-end gap-3 border-t border-border pt-5">{footer}</div>}
       </div>
     </div>,
     document.body,

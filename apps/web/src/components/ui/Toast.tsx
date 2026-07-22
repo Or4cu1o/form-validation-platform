@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { CheckCircle2, Info, XCircle } from 'lucide-react';
 import { cn } from '../../lib/cn';
 
 type ToastTone = 'success' | 'error' | 'info';
@@ -20,9 +21,15 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 const TOAST_DURATION_MS = 5000;
 
 const toneClasses: Record<ToastTone, string> = {
-  success: 'border-status-concluido/40 bg-paper-raised text-status-concluido',
-  error: 'border-status-reprovado/40 bg-paper-raised text-status-reprovado',
+  success: 'border-status-concluido/30 bg-paper-raised text-status-concluido',
+  error: 'border-status-reprovado/30 bg-paper-raised text-status-reprovado',
   info: 'border-border-strong bg-paper-raised text-ink',
+};
+
+const toneIcons: Record<ToastTone, typeof CheckCircle2> = {
+  success: CheckCircle2,
+  error: XCircle,
+  info: Info,
 };
 
 function generateId() {
@@ -54,15 +61,22 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       {createPortal(
         <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2">
-          {toasts.map((toast) => (
-            <div
-              key={toast.id}
-              role="status"
-              className={cn('rounded border px-4 py-3 text-sm shadow-floating', toneClasses[toast.tone])}
-            >
-              {toast.message}
-            </div>
-          ))}
+          {toasts.map((toast) => {
+            const Icon = toneIcons[toast.tone];
+            return (
+              <div
+                key={toast.id}
+                role="status"
+                className={cn(
+                  'flex animate-slide-in-right items-center gap-2.5 rounded border px-4 py-3 text-sm shadow-floating',
+                  toneClasses[toast.tone],
+                )}
+              >
+                <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                {toast.message}
+              </div>
+            );
+          })}
         </div>,
         document.body,
       )}

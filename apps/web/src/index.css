@@ -1,15 +1,27 @@
 @import '@fontsource/newsreader/400.css';
 @import '@fontsource/newsreader/500.css';
+@import '@fontsource/newsreader/600.css';
 @import '@fontsource/newsreader/600-italic.css';
+@import '@fontsource/newsreader/700.css';
 @import '@fontsource/inter/400.css';
 @import '@fontsource/inter/500.css';
 @import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
 @import '@fontsource/jetbrains-mono/400.css';
 @import '@fontsource/jetbrains-mono/500.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  /* Tokens de movimento — usados diretamente em CSS custom + pelas
+     extensões `transitionDuration`/`transitionTimingFunction` do Tailwind. */
+  --duration-fast: 150ms;
+  --duration-normal: 220ms;
+  --duration-slow: 320ms;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
 
 @layer base {
   html {
@@ -29,10 +41,25 @@
   :focus-visible {
     @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-paper;
   }
+
+  ::selection {
+    @apply bg-accent-200 text-accent-900;
+  }
 }
 
 @layer components {
   .data-figure {
     @apply font-mono tabular-nums;
+  }
+
+  /* Grade fina em azul institucional — motivo recorrente do sistema,
+     evocando planta técnica/infraestrutura sem recorrer a gradientes
+     decorativos genéricos. Usado no painel de login e em superfícies
+     de destaque. */
+  .blueprint-grid {
+    background-image:
+      linear-gradient(oklch(100% 0 0 / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(100% 0 0 / 0.05) 1px, transparent 1px);
+    background-size: 28px 28px;
   }
 }

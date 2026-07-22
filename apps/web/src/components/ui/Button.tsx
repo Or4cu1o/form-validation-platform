@@ -12,15 +12,16 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: 'bg-accent text-accent-ink hover:bg-accent-hover',
-  secondary: 'bg-paper-raised text-ink border border-border-strong hover:bg-paper',
-  ghost: 'bg-transparent text-ink-muted hover:bg-paper-raised hover:text-ink',
-  danger: 'bg-status-reprovado text-white hover:brightness-95',
+  primary: 'bg-accent text-accent-ink shadow-xs hover:bg-accent-hover active:bg-accent-active',
+  secondary:
+    'bg-paper-raised text-ink border border-border-strong hover:border-ink-faint hover:bg-paper active:bg-paper-sunken',
+  ghost: 'bg-transparent text-ink-muted hover:bg-paper-sunken hover:text-ink active:bg-border/60',
+  danger: 'bg-status-reprovado text-white shadow-xs hover:brightness-[1.08] active:brightness-95',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'h-8 px-3 text-sm',
-  md: 'h-10 px-4 text-sm',
+  sm: 'h-9 px-3.5 text-sm',
+  md: 'h-11 px-5 text-sm',
 };
 
 export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
@@ -32,8 +33,10 @@ export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
       ref={ref}
       disabled={disabled || isLoading}
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded font-medium transition-colors',
-        'disabled:cursor-not-allowed disabled:opacity-50',
+        'inline-flex items-center justify-center gap-2 rounded font-medium',
+        'transition-[background-color,border-color,color,transform,box-shadow] duration-normal ease-out-expo',
+        'active:scale-[0.98]',
+        'disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100',
         variantClasses[variant],
         sizeClasses[size],
         className,

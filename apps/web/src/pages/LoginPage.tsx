@@ -4,8 +4,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ApiError } from '../lib/api-error';
 import { Button, Field, Input } from '../components/ui';
-
-const logoUrl = '/logo-agir-branco.png';
+import { brand } from '../config/brand';
 
 export function LoginPage() {
   const { user, login } = useAuth();
@@ -44,29 +43,42 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-screen">
-      <div className="hidden w-1/2 flex-col justify-between bg-console px-16 py-12 text-white lg:flex">
-        <p className="font-display text-2xl font-bold tracking-wider text-white">GCINFRA</p>
-        <div>
-          <div className="flex justify-center mb-10">
-            <img src={logoUrl} alt="Agir Saúde Logo" className="w-full max-w-lg h-auto object-contain" />
-          </div>
-          <h1 className="font-display text-display-lg font-medium leading-tight text-white">
-            Governança e automação de indicadores de TI.
-          </h1>
-          <p className="mt-4 max-w-md text-white/60">
-            Elaboração, revisão e validação de relatórios com trilha de auditoria completa,
-            do lançamento à aprovação final.
-          </p>
+      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-console px-16 py-14 text-white lg:flex">
+        <div className="blueprint-grid pointer-events-none absolute inset-0" aria-hidden="true" />
+        <div
+          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-accent/20 blur-3xl"
+          aria-hidden="true"
+        />
+
+        <div className="relative flex items-center gap-3">
+          <span className="flex h-9 w-9 items-center justify-center rounded bg-accent text-sm font-bold text-accent-ink">
+            {brand.departmentAcronym.charAt(0)}
+          </span>
+          <p className="font-display text-xl font-medium tracking-wide text-white">{brand.departmentAcronym}</p>
         </div>
-        <p className="text-xs text-white/40">GCINFRA — Gerência Corporativa de Infraestrutura | AGIR 2026</p>
+
+        <div className="relative max-w-lg">
+          <p className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-accent-200">
+            {brand.systemName}
+          </p>
+          <h1 className="font-display text-display-lg font-medium italic leading-[1.05] text-white">
+            Governança de indicadores, do lançamento à aprovação final.
+          </h1>
+          <p className="mt-6 max-w-md text-[15px] leading-relaxed text-white/60">{brand.systemPurposeShort}</p>
+        </div>
+
+        <p className="relative text-xs text-white/40">{brand.copyrightLine}</p>
       </div>
 
       <div className="flex w-full flex-1 items-center justify-center bg-paper px-6 py-12 lg:w-1/2">
-        <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-lg bg-paper-raised p-8 shadow-panel">
+        <form
+          onSubmit={handleSubmit}
+          className="w-full max-w-sm animate-rise-in rounded-lg border border-border bg-paper-raised p-8 shadow-raised"
+        >
           <h2 className="font-display text-display-sm font-medium text-ink">Entrar</h2>
-          <p className="mt-1 text-sm text-ink-muted">Acesse com sua matrícula ou e-mail institucional.</p>
+          <p className="mt-1.5 text-sm text-ink-muted">Acesse com sua matrícula ou e-mail institucional.</p>
 
-          <div className="mt-6 flex flex-col gap-4">
+          <div className="mt-8 flex flex-col gap-5">
             <Field label="Matrícula ou e-mail" htmlFor="identifier" required>
               <Input
                 id="identifier"

@@ -101,7 +101,10 @@ function SortableHeader({
     <button
       type="button"
       onClick={() => onSort(column)}
-      className={cn('flex items-center gap-1 uppercase tracking-wide', isActive ? 'text-ink' : 'text-ink-faint')}
+      className={cn(
+        'flex items-center gap-1 uppercase tracking-wide transition-colors duration-fast ease-out-expo hover:text-ink',
+        isActive ? 'text-ink' : 'text-ink-faint',
+      )}
     >
       {label}
       {isActive &&
@@ -111,6 +114,40 @@ function SortableHeader({
           <ArrowDown className="h-3 w-3" aria-hidden="true" />
         ))}
     </button>
+  );
+}
+
+function StatusOverview({ reports }: { reports: ReportInstance[] }) {
+  const counts = useMemo(() => {
+    const byStatus = new Map<ReportStatus, number>();
+    for (const report of reports) {
+      byStatus.set(report.status, (byStatus.get(report.status) ?? 0) + 1);
+    }
+    return byStatus;
+  }, [reports]);
+
+  const statuses = Object.keys(REPORT_STATUS_LABEL) as ReportStatus[];
+
+  return (
+    <div className="flex flex-wrap items-stretch gap-x-10 gap-y-4 border-b border-border bg-paper-raised px-8 py-6">
+      <div className="pr-10">
+        <p className="font-display text-display text-ink">{reports.length}</p>
+        <p className="mt-1 text-xs font-medium uppercase tracking-wide text-ink-faint">Relatórios no período</p>
+      </div>
+      {statuses.map((statusKey, index) => (
+        <div
+          key={statusKey}
+          className={cn('pl-0', index > 0 && 'border-l border-border pl-10')}
+        >
+          <p className={cn('data-figure text-3xl font-medium', `text-status-${REPORT_STATUS_TONE[statusKey]}`)}>
+            {counts.get(statusKey) ?? 0}
+          </p>
+          <p className="mt-1 text-xs font-medium uppercase tracking-wide text-ink-faint">
+            {REPORT_STATUS_LABEL[statusKey]}
+          </p>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -175,11 +212,14 @@ export function DashboardPage() {
   return (
     <>
       <PageHeader
+        eyebrow="Visão consolidada"
         title="Painel Central"
         description="Histórico de relatórios da(s) unidade(s) com filtros, ordenação e exportação rápida."
       />
 
-      <div className="flex flex-wrap items-end gap-3 border-b border-border px-8 py-4">
+      <StatusOverview reports={reports} />
+
+      <div className="flex flex-wrap items-end gap-3 border-b border-border bg-paper-raised px-8 py-4">
         <div className="flex min-w-[220px] flex-1 flex-col gap-1.5">
           <label htmlFor="search" className="text-xs font-medium text-ink-muted">
             Busca por unidade
@@ -245,7 +285,7 @@ export function DashboardPage() {
         </div>
       </div>
 
-      <div className="p-8">
+      <div className="p-8 pt-6">
         {isLoading && <Spinner label="Carregando relatórios..." />}
 
         {isError && (
@@ -291,7 +331,7 @@ export function DashboardPage() {
                     <TD>
                       <div className="flex items-center gap-3">
                         {canOpenDetail && (
-                          <Link to={`/relatorios/${report.id}`} className="text-sm font-medium text-accent-ink hover:underline">
+                          <Link to={`/relatorios/${report.id}`} className="text-sm font-medium text-accent hover:text-accent-hover hover:underline">
                             Ver
                           </Link>
                         )}

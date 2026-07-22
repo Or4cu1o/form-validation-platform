@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Paperclip, UploadCloud, XCircle } from 'lucide-react';
 import { updateIndicatorResponseValues, uploadIndicatorEvidence } from '../../api/indicator-responses';
 import { getEvidenceDownloadUrl } from '../../api/evidence';
-import { Button, Input, StatusBadge, useToast } from '../ui';
+import { Button, Input, StatusBadge, Textarea, useToast } from '../ui';
 import { formatBytes, formatDateTime, formatNumber } from '../../lib/format';
 import { GOAL_OPERATOR_SYMBOL, INDICATOR_VALIDATION_LABEL, INDICATOR_VALIDATION_TONE, VALIDATION_VERDICT_LABEL, VARIABLE_LABELS } from '../../lib/status';
 import { cn } from '../../lib/cn';
@@ -94,11 +94,11 @@ export function IndicatorResponseCard({ response, reportInstanceId, isEditable }
   const goalLabel = `${GOAL_OPERATOR_SYMBOL[response.snapshotGoalOperator]} ${formatNumber(response.snapshotGoalValue)}`;
 
   return (
-    <div className="rounded-lg border border-border bg-paper-raised p-6 shadow-panel">
+    <div className="rounded-lg border border-border bg-paper-raised p-7 shadow-panel transition-shadow duration-normal ease-out-expo hover:shadow-raised">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="font-display text-lg font-medium text-ink">{response.snapshotTitle}</h3>
-          <p className="mt-1 max-w-2xl text-sm text-ink-muted">{response.snapshotObjective}</p>
+          <h3 className="font-display text-xl font-medium text-ink">{response.snapshotTitle}</h3>
+          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-ink-muted">{response.snapshotObjective}</p>
         </div>
         <StatusBadge
           tone={INDICATOR_VALIDATION_TONE[response.validationStatus]}
@@ -106,7 +106,7 @@ export function IndicatorResponseCard({ response, reportInstanceId, isEditable }
         />
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-6 text-sm">
+      <div className="mt-5 flex flex-wrap items-center gap-7 rounded border border-border bg-paper-sunken px-4 py-3 text-sm">
         <div>
           <p className="text-xs text-ink-faint">Meta</p>
           <p className="data-figure font-medium text-ink">{goalLabel}</p>
@@ -130,7 +130,7 @@ export function IndicatorResponseCard({ response, reportInstanceId, isEditable }
         </div>
       </div>
 
-      <div className="mt-6 flex flex-col gap-6 max-w-2xl">
+      <div className="mt-7 flex max-w-2xl flex-col gap-7">
         {response.snapshotVariableKeys.map((key) => (
           <div key={key} className="flex flex-col gap-2">
             <label htmlFor={`${response.id}-${key}`} className="text-sm font-semibold text-ink">
@@ -140,7 +140,7 @@ export function IndicatorResponseCard({ response, reportInstanceId, isEditable }
               id={`${response.id}-${key}`}
               type="number"
               inputMode="decimal"
-              className="data-figure bg-paper h-11 border-border shadow-none focus-visible:ring-accent transition-all duration-200"
+              className="data-figure max-w-xs"
               value={draftValues[key] ?? ''}
               disabled={!isEditable}
               onChange={(event) => setDraftValues((current) => ({ ...current, [key]: event.target.value }))}
@@ -148,16 +148,15 @@ export function IndicatorResponseCard({ response, reportInstanceId, isEditable }
           </div>
         ))}
 
-        <div className="flex flex-col gap-2 border-t border-border pt-4 mt-2">
+        <div className="flex flex-col gap-2 border-t border-border pt-6">
           <label htmlFor={`${response.id}-criticalAnalysis`} className="text-sm font-semibold text-ink">
             Análise Crítica
           </label>
-          <p className="text-xs text-ink-muted -mt-1">
+          <p className="-mt-1 text-xs text-ink-muted">
             Descreva as causas, justificativas ou fatores que influenciaram o resultado deste indicador no mês.
           </p>
-          <textarea
+          <Textarea
             id={`${response.id}-criticalAnalysis`}
-            className="w-full rounded border border-border-strong bg-paper px-3 py-2 text-sm text-ink outline-none transition-all focus:ring-2 focus:ring-accent disabled:bg-paper-flat disabled:text-ink-muted min-h-[80px]"
             value={draftCriticalAnalysis}
             disabled={!isEditable}
             onChange={(event) => setDraftCriticalAnalysis(event.target.value)}
@@ -165,16 +164,15 @@ export function IndicatorResponseCard({ response, reportInstanceId, isEditable }
           />
         </div>
 
-        <div className="flex flex-col gap-2 mt-2">
+        <div className="flex flex-col gap-2">
           <label htmlFor={`${response.id}-actionPlan`} className="text-sm font-semibold text-ink">
             Plano de ação para alcançar a meta
           </label>
-          <p className="text-xs text-ink-muted -mt-1">
+          <p className="-mt-1 text-xs text-ink-muted">
             Caso o resultado esteja fora da meta, detalhe o plano de ação corretivo.
           </p>
-          <textarea
+          <Textarea
             id={`${response.id}-actionPlan`}
-            className="w-full rounded border border-border-strong bg-paper px-3 py-2 text-sm text-ink outline-none transition-all focus:ring-2 focus:ring-accent disabled:bg-paper-flat disabled:text-ink-muted min-h-[80px]"
             value={draftActionPlan}
             disabled={!isEditable}
             onChange={(event) => setDraftActionPlan(event.target.value)}
@@ -184,22 +182,22 @@ export function IndicatorResponseCard({ response, reportInstanceId, isEditable }
       </div>
 
       {isEditable && (
-        <div className="mt-4">
+        <div className="mt-5">
           <Button size="sm" onClick={() => saveMutation.mutate()} isLoading={saveMutation.isPending} disabled={!isDirty}>
             Salvar valores
           </Button>
         </div>
       )}
 
-      <div className="mt-5 border-t border-border pt-4">
-        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-faint">Evidências</p>
+      <div className="mt-6 border-t border-border pt-5">
+        <p className="mb-2.5 text-xs font-semibold uppercase tracking-wide text-ink-faint">Evidências</p>
         <div className="flex flex-wrap gap-2">
           {(response.evidenceFiles ?? []).map((evidence) => (
             <button
               key={evidence.id}
               type="button"
               onClick={() => handleDownload(evidence.id)}
-              className="flex items-center gap-1.5 rounded border border-border-strong bg-paper px-2.5 py-1.5 text-xs text-ink-muted hover:text-ink"
+              className="flex items-center gap-1.5 rounded border border-border-strong bg-paper px-2.5 py-1.5 text-xs text-ink-muted transition-colors duration-fast ease-out-expo hover:border-accent/40 hover:bg-accent-50 hover:text-accent"
             >
               <Paperclip className="h-3.5 w-3.5" aria-hidden="true" />
               {evidence.fileName}

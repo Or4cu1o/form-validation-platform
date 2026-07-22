@@ -3,6 +3,7 @@ import { ClipboardList, LayoutDashboard, LogOut, ShieldCheck, Sliders, Users } f
 import { useAuth } from '../context/AuthContext';
 import { ROLE_LABEL } from '../lib/status';
 import { cn } from '../lib/cn';
+import { brand } from '../config/brand';
 import type { RoleName } from '../types/api';
 
 interface NavItem {
@@ -45,6 +46,10 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
+function initialsOf(nome: string, sobrenome: string): string {
+  return `${nome.charAt(0)}${sobrenome.charAt(0)}`.toUpperCase();
+}
+
 export function AppShell() {
   const { user, logout } = useAuth();
 
@@ -54,13 +59,25 @@ export function AppShell() {
 
   return (
     <div className="flex min-h-screen bg-paper">
-      <aside className="flex w-64 shrink-0 flex-col bg-console text-white">
-        <div className="border-b border-console-border px-6 py-5">
-          <p className="font-display text-lg font-bold tracking-wider text-white">GCINFRA</p>
-          <p className="text-[10px] text-white/50 uppercase tracking-widest mt-0.5">Gerência de Infraestrutura</p>
+      <aside className="flex w-72 shrink-0 flex-col bg-console text-white">
+        <div className="flex items-center gap-3 border-b border-console-border px-6 py-6">
+          <span
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-accent text-sm font-bold tracking-tight text-accent-ink"
+            aria-hidden="true"
+          >
+            {brand.departmentAcronym.charAt(0)}
+          </span>
+          <div className="min-w-0">
+            <p className="truncate font-display text-lg font-medium tracking-wide text-white">
+              {brand.departmentAcronym}
+            </p>
+            <p className="truncate text-[10px] uppercase tracking-[0.14em] text-white/50">
+              {brand.departmentFullName}
+            </p>
+          </div>
         </div>
 
-        <nav className="flex-1 space-y-1 px-3 py-4">
+        <nav className="flex-1 space-y-0.5 px-3 py-5" aria-label="Navegação principal">
           {visibleItems.map((item) => (
             <NavLink
               key={item.to}
@@ -68,41 +85,52 @@ export function AppShell() {
               end={item.to === '/'}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors',
-                  isActive ? 'bg-accent text-white font-medium shadow-sm' : 'text-slate-300 hover:bg-console-raised hover:text-white',
+                  'group relative flex items-center gap-3 rounded-sm border-l-2 py-2.5 pl-4 pr-3 text-sm font-medium',
+                  'transition-[color,background-color,border-color] duration-normal ease-out-expo',
+                  isActive
+                    ? 'border-accent-300 bg-white/[0.07] text-white'
+                    : 'border-transparent text-white/60 hover:border-white/20 hover:bg-white/[0.04] hover:text-white/90',
                 )
               }
             >
-              <item.icon className="h-4 w-4" aria-hidden="true" />
-              {item.label}
+              <item.icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" strokeWidth={1.75} />
+              <span className="truncate">{item.label}</span>
             </NavLink>
           ))}
         </nav>
 
         <div className="border-t border-console-border px-3 py-4">
-          <div className="mb-2 px-3">
-            <p className="truncate text-sm font-medium text-white">
-              {user.nome} {user.sobrenome}
-            </p>
-            <p className="text-xs text-white/50">{ROLE_LABEL[user.role]}</p>
+          <div className="mb-1 flex items-center gap-3 rounded-sm px-3 py-2">
+            <span
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-900 text-xs font-semibold text-accent-200"
+              aria-hidden="true"
+            >
+              {initialsOf(user.nome, user.sobrenome)}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-white">
+                {user.nome} {user.sobrenome}
+              </p>
+              <p className="truncate text-xs text-white/50">{ROLE_LABEL[user.role]}</p>
+            </div>
           </div>
           <button
             type="button"
             onClick={logout}
-            className="flex w-full items-center gap-3 rounded px-3 py-2 text-sm font-medium text-white/70 transition-colors hover:bg-console-raised hover:text-white"
+            className="flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm font-medium text-white/60 transition-colors duration-normal ease-out-expo hover:bg-white/[0.05] hover:text-white"
           >
-            <LogOut className="h-4 w-4" aria-hidden="true" />
+            <LogOut className="h-[18px] w-[18px]" aria-hidden="true" strokeWidth={1.75} />
             Sair
           </button>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto flex flex-col justify-between">
+      <main className="flex flex-1 flex-col justify-between overflow-y-auto">
         <div className="flex-1">
           <Outlet />
         </div>
-        <footer className="border-t border-border px-8 py-4 bg-paper-raised text-center text-xs text-ink-faint">
-          GCINFRA — Gerência Corporativa de Infraestrutura | © 2026 AGIR - Associação de Gestão, Inovação e Resultados em Saúde
+        <footer className="border-t border-border bg-paper-raised px-8 py-4 text-center text-xs text-ink-faint">
+          {brand.copyrightLine}
         </footer>
       </main>
     </div>

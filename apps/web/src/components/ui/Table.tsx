@@ -10,7 +10,12 @@ export function Table({ className, ...rest }: HTMLAttributes<HTMLTableElement>) 
 }
 
 export function THead({ className, ...rest }: HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead className={cn('bg-paper text-xs uppercase tracking-wide text-ink-faint', className)} {...rest} />;
+  return (
+    <thead
+      className={cn('border-b border-border bg-paper-sunken text-xs uppercase tracking-wide text-ink-muted', className)}
+      {...rest}
+    />
+  );
 }
 
 export function TBody({ className, ...rest }: HTMLAttributes<HTMLTableSectionElement>) {
@@ -18,13 +23,15 @@ export function TBody({ className, ...rest }: HTMLAttributes<HTMLTableSectionEle
 }
 
 export function TR({ className, ...rest }: HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn('transition-colors hover:bg-paper', className)} {...rest} />;
+  return (
+    <tr className={cn('transition-colors duration-fast ease-out-expo hover:bg-accent-50/60', className)} {...rest} />
+  );
 }
 
 export function TH({ className, ...rest }: ThHTMLAttributes<HTMLTableCellElement>) {
-  return <th className={cn('px-4 py-3 font-medium', className)} {...rest} />;
+  return <th className={cn('px-4 py-3.5 font-semibold', className)} {...rest} />;
 }
 
 export function TD({ className, ...rest }: TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn('px-4 py-3 align-middle text-ink', className)} {...rest} />;
+  return <td className={cn('px-4 py-3.5 align-middle text-ink', className)} {...rest} />;
 }

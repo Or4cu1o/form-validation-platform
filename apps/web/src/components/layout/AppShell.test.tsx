@@ -75,4 +75,16 @@ describe('AppShell', () => {
     fireEvent.click(screen.getByRole('button', { name: /Sair/ }));
     expect(logout).toHaveBeenCalledTimes(1);
   });
+
+  it('renders the user primary unit acronym and name when available', () => {
+    const userWithUnit: AuthenticatedUser = {
+      ...baseUser,
+      primaryUnit: { id: 'unit-1', sigla: 'HUGO', nome: 'Hospital de Urgências de Goiás' },
+    };
+    vi.mocked(AuthContextModule.useAuth).mockReturnValue({ user: userWithUnit, isLoading: false, login: vi.fn(), logout: vi.fn() });
+    renderShell();
+
+    expect(screen.getByText('HUGO')).toBeInTheDocument();
+    expect(screen.getByText('Hospital de Urgências de Goiás')).toBeInTheDocument();
+  });
 });

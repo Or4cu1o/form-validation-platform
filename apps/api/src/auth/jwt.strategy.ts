@@ -24,7 +24,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException('Usuario inativo ou inexistente');
     }
-    const { id, matricula, nome, sobrenome, email, role, primaryUnitId } = user;
-    return { id, matricula, nome, sobrenome, email, role, primaryUnitId };
+    const { id, matricula, nome, sobrenome, email, role, primaryUnitId, primaryUnit } = user;
+    return { id, matricula, nome, sobrenome, email, role, primaryUnitId, primaryUnit };
   }
 }

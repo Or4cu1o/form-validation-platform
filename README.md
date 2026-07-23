@@ -29,6 +29,9 @@ npm run down
 # Executar um deploy limpo do zero (limpa cache/volumes/node_modules e reinstala)
 npm run deploy
 
+# Executar deploy limpo do zero + semeadura dos formulários proprietários (N1/N3)
+npm run deploy:seed
+
 # Semeia formulários proprietários no banco de dados (N1/N3)
 npm run seed:proprietary
 

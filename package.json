@@ -11,6 +11,7 @@
     "stop": "node scripts/manage.js stop",
     "down": "node scripts/manage.js down",
     "deploy": "node scripts/manage.js deploy",
+    "deploy:seed": "node scripts/manage.js deploy:seed",
     "seed:proprietary": "node scripts/manage.js seed",
     "formops": "node scripts/manage.js",
     "dev:api": "npm run start:dev --workspace=apps/api",

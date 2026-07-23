@@ -65,14 +65,14 @@ export function AppShell() {
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-accent text-sm font-bold tracking-tight text-accent-ink"
             aria-hidden="true"
           >
-            {brand.departmentAcronym.charAt(0)}
+            {user.primaryUnit?.sigla ? user.primaryUnit.sigla.charAt(0) : brand.departmentAcronym.charAt(0)}
           </span>
           <div className="min-w-0">
             <p className="truncate font-display text-lg font-semibold tracking-wide text-white">
-              {brand.departmentAcronym}
+              {user.primaryUnit?.sigla ?? brand.departmentAcronym}
             </p>
             <p className="truncate text-[10px] uppercase tracking-[0.14em] text-white/50">
-              {brand.departmentFullName}
+              {user.primaryUnit?.nome ?? brand.departmentFullName}
             </p>
           </div>
         </div>

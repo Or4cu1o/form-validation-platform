@@ -8,4 +8,9 @@ export interface AuthenticatedUser {
   email: string;
   role: RoleName;
   primaryUnitId: string;
+  primaryUnit?: {
+    id: string;
+    sigla: string;
+    nome: string;
+  };
 }

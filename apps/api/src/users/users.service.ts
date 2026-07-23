@@ -11,12 +11,22 @@ export class UsersService {
         isActive: true,
         OR: [{ matricula: identifier }, { email: identifier }],
       },
+      include: {
+        primaryUnit: {
+          select: { id: true, sigla: true, nome: true },
+        },
+      },
     });
   }
 
   findActiveById(id: string) {
     return this.prisma.user.findFirst({
       where: { id, isActive: true },
+      include: {
+        primaryUnit: {
+          select: { id: true, sigla: true, nome: true },
+        },
+      },
     });
   }
 }

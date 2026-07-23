@@ -195,6 +195,7 @@ function printManagementMenu() {
   console.log(`  - Parar aplicação:  ${GREEN}npm run stop${RESET}`);
   console.log(`  - Parar tudo+banco: ${GREEN}npm run down${RESET}`);
   console.log(`  - Deploy do zero:   ${GREEN}npm run deploy${RESET}`);
+  console.log(`  - Deploy + Seed:    ${GREEN}npm run deploy:seed${RESET}`);
   console.log(`  - Semear forms:     ${GREEN}npm run seed:proprietary${RESET}`);
   console.log(`  - Verificar status: ${GREEN}npm run status${RESET}`);
   console.log(`${CYAN}======================================================================${RESET}\n`);
@@ -261,11 +262,12 @@ function downApp() {
 }
 
 // Aguardar PostgreSQL e migrar
-function waitAndMigrateDb() {
+async function waitAndMigrateDb() {
   console.log(`${YELLOW}Aguardando banco de dados PostgreSQL aceitar conexões...${RESET}`);
   let retries = 0;
   let ok = false;
-  while (retries < 20) {
+  const MAX_RETRIES = 45; // até 90 segundos de tolerância para initdb de novos volumes Docker
+  while (retries < MAX_RETRIES) {
     try {
       execSync('npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma', { cwd: ROOT_DIR, stdio: 'ignore' });
       console.log(`${GREEN}✓ Banco de dados pronto e migrações aplicadas!${RESET}`);
@@ -273,7 +275,7 @@ function waitAndMigrateDb() {
       break;
     } catch {
       retries++;
-      execSync('sleep 2');
+      await new Promise(r => setTimeout(r, 2000));
     }
   }
   if (!ok) {
@@ -407,7 +409,7 @@ async function commandStart() {
     run(`${DOCKER_COMPOSE} up -d postgres minio`);
   }
 
-  waitAndMigrateDb();
+  await waitAndMigrateDb();
 
   if (!isFlush) {
     if (process.env.SEED_ON_START === 'true' || process.env.NODE_ENV === 'development') {
@@ -474,14 +476,14 @@ async function commandRestart() {
     console.log(`Reiniciando containers Docker (${DOCKER_COMPOSE} restart)...`);
     run(`${DOCKER_COMPOSE} restart`, { ignoreError: true });
   }
-  waitAndMigrateDb();
+  await waitAndMigrateDb();
   const { apiPid, webPid } = startProcesses();
   await validateHealth(apiPid, webPid);
 }
 
-async function commandDeploy() {
+async function commandDeploy(withSeeds = false) {
   console.log(`${CYAN}======================================================================${RESET}`);
-  console.log(`${BOLD}        INICIANDO DEPLOY LIMPO DO ZERO (CLEAN DEPLOY)                 ${RESET}`);
+  console.log(`${BOLD}        INICIANDO DEPLOY LIMPO DO ZERO (${withSeeds ? 'CLEAN DEPLOY + SEED PROPRIETÁRIO' : 'CLEAN DEPLOY'})                 ${RESET}`);
   console.log(`${CYAN}======================================================================${RESET}`);
   console.log(`${YELLOW}Limpando processos, containers, volumes Docker, node_modules e dists...${RESET}`);
 
@@ -502,12 +504,12 @@ async function commandDeploy() {
     run(`${DOCKER_COMPOSE} up -d postgres minio`);
   }
 
-  waitAndMigrateDb();
-  console.log('Executando carga inicial de seeds...');
+  await waitAndMigrateDb();
+  console.log('\nExecutando carga de dados de seed (Admin + Usuários de Teste Dev)...');
   run('npm run seed --workspace=apps/api');
 
-  if (process.env.SEED_PROPRIETARY_FORMS === 'true') {
-    console.log('Semeando formulários proprietários (N1 e N3)...');
+  if (withSeeds || process.env.SEED_PROPRIETARY_FORMS === 'true') {
+    console.log('\nSemeando formulários proprietários (N1 e N3)...');
     run('npm run seed:n1 --workspace=apps/api');
     run('npm run seed:n3 --workspace=apps/api');
   }
@@ -587,6 +589,7 @@ async function commandSummary() {
   console.log(`  ${GREEN}npm run stop${RESET}            : Encerra os processos locais da aplicação.`);
   console.log(`  ${GREEN}npm run down${RESET}            : Encerra a aplicação e derruba os containers Docker.`);
   console.log(`  ${GREEN}npm run deploy${RESET}          : Realiza deploy limpo do zero.`);
+  console.log(`  ${GREEN}npm run deploy:seed${RESET}     : Realiza deploy limpo do zero + semeadura dos formulários.`);
   console.log(`  ${GREEN}npm run seed:proprietary${RESET}: Popula o banco com os formulários proprietários (N1/N3).`);
   console.log(`  ${GREEN}npm run status${RESET}          : Exibe o status dos processos locais e containers.`);
   console.log(`${CYAN}======================================================================${RESET}\n`);
@@ -613,7 +616,12 @@ async function main() {
       downApp();
       break;
     case 'deploy':
-      await commandDeploy();
+      await commandDeploy(false);
+      break;
+    case 'deploy:seed':
+    case 'deploy-seed':
+    case 'deploy_seed':
+      await commandDeploy(true);
       break;
     case 'seed':
       commandSeed();

@@ -42,8 +42,9 @@ export class AuthService {
     email: string;
     role: AuthenticatedUser['role'];
     primaryUnitId: string;
+    primaryUnit?: { id: string; sigla: string; nome: string };
   }): AuthenticatedUser {
-    const { id, matricula, nome, sobrenome, email, role, primaryUnitId } = user;
-    return { id, matricula, nome, sobrenome, email, role, primaryUnitId };
+    const { id, matricula, nome, sobrenome, email, role, primaryUnitId, primaryUnit } = user;
+    return { id, matricula, nome, sobrenome, email, role, primaryUnitId, primaryUnit };
   }
 }

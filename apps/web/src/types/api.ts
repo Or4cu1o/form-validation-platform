@@ -18,6 +18,7 @@ export interface AuthenticatedUser {
   email: string;
   role: RoleName;
   primaryUnitId: string;
+  primaryUnit?: UnitSummary;
 }
 
 export interface LoginResponse {

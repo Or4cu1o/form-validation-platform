@@ -172,8 +172,25 @@ export interface ReportInstance {
 export interface SystemSetting {
   id: string;
   exportNamingPattern: string;
+  slaElaborationBusinessDay: number;
+  slaReviewBusinessDay: number;
+  slaApprovalBusinessDay: number;
+  slaReprovalExtensionDays: number;
+  slaDeflatorScore: number;
   updatedAt: string;
 }
+
+export type UpdatePlatformSettingsInput = Partial<
+  Pick<
+    SystemSetting,
+    | 'exportNamingPattern'
+    | 'slaElaborationBusinessDay'
+    | 'slaReviewBusinessDay'
+    | 'slaApprovalBusinessDay'
+    | 'slaReprovalExtensionDays'
+    | 'slaDeflatorScore'
+  >
+>;
 
 export interface ApiErrorBody {
   statusCode: number;

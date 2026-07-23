@@ -4,7 +4,7 @@ import { AuthenticatedUser } from '../auth/types/authenticated-user.interface';
 import { UnitAccessService } from '../common/services/unit-access.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { buildCsv } from './csv.util';
-import { ExportSettingsService } from './export-settings.service';
+import { PlatformSettingsService } from './platform-settings.service';
 import { interpolateNamingPattern } from './naming-pattern.util';
 
 const REPORT_EXPORT_INCLUDE = {
@@ -40,7 +40,7 @@ export class ReportExportService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly unitAccessService: UnitAccessService,
-    private readonly exportSettingsService: ExportSettingsService,
+    private readonly platformSettingsService: PlatformSettingsService,
   ) {}
 
   async export(id: string, format: 'csv' | 'json', user: AuthenticatedUser): Promise<ExportFile> {
@@ -54,7 +54,7 @@ export class ReportExportService {
     await this.unitAccessService.assertReadAccess(report.unitId, user);
 
     const payload = this.buildPayload(report);
-    const settings = await this.exportSettingsService.getSettings();
+    const settings = await this.platformSettingsService.getSettings();
     const baseName = interpolateNamingPattern(settings.exportNamingPattern, {
       SIGLA_UNIDADE: report.unit.sigla,
       DATA_ISO: new Date().toISOString().slice(0, 10),

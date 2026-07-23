@@ -4,11 +4,11 @@ import { fireEvent } from '@testing-library/react';
 import { AdminFormsPage } from './AdminFormsPage';
 import { renderWithProviders } from '../test/render-with-providers';
 import * as formsApi from '../api/forms';
-import * as exportApi from '../api/export';
+import * as settingsApi from '../api/settings';
 import type { FormTemplate } from '../types/api';
 
 vi.mock('../api/forms');
-vi.mock('../api/export');
+vi.mock('../api/settings');
 
 const template: FormTemplate = {
   id: 'template-1',
@@ -28,9 +28,14 @@ describe('AdminFormsPage', () => {
   it('shows a placeholder until a template is selected, then loads its detail', async () => {
     vi.mocked(formsApi.listFormTemplates).mockResolvedValueOnce([template]);
     vi.mocked(formsApi.getFormTemplate).mockResolvedValueOnce(template);
-    vi.mocked(exportApi.getExportSettings).mockResolvedValueOnce({
+    vi.mocked(settingsApi.getPlatformSettings).mockResolvedValueOnce({
       id: 'settings-1',
       exportNamingPattern: '{SIGLA UNIDADE} - {data iso}',
+      slaElaborationBusinessDay: 6,
+      slaReviewBusinessDay: 8,
+      slaApprovalBusinessDay: 10,
+      slaReprovalExtensionDays: 2,
+      slaDeflatorScore: 2,
       updatedAt: '2026-01-01T00:00:00.000Z',
     });
 

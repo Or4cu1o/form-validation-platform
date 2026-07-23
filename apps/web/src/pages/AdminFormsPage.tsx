@@ -6,7 +6,7 @@ import { PageHeader } from '../components/layout/PageHeader';
 import { TemplateFormModal } from '../components/admin/forms/TemplateFormModal';
 import { FormTemplateDetail } from '../components/admin/forms/FormTemplateDetail';
 import { activateFormTemplate, deactivateFormTemplate, getFormTemplate, listFormTemplates } from '../api/forms';
-import { getExportSettings, updateExportSettings } from '../api/export';
+import { getPlatformSettings, updatePlatformSettings } from '../api/settings';
 import { Button, EmptyState, Field, Input, Spinner, StatusBadge, useToast } from '../components/ui';
 import { cn } from '../lib/cn';
 import type { FormTemplate } from '../types/api';
@@ -16,14 +16,14 @@ type ModalState = { type: 'create' } | { type: 'edit'; template: FormTemplate } 
 function ExportSettingsPanel() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
-  const { data: settings } = useQuery({ queryKey: ['export-settings'], queryFn: getExportSettings });
+  const { data: settings } = useQuery({ queryKey: ['platform-settings'], queryFn: getPlatformSettings });
   const [pattern, setPattern] = useState('');
 
   const mutation = useMutation({
-    mutationFn: (value: string) => updateExportSettings(value),
+    mutationFn: (value: string) => updatePlatformSettings({ exportNamingPattern: value }),
     onSuccess: () => {
       showToast('Padrão de nomenclatura atualizado.', 'success');
-      queryClient.invalidateQueries({ queryKey: ['export-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['platform-settings'] });
     },
     onError: () => showToast('Não foi possível atualizar o padrão.', 'error'),
   });

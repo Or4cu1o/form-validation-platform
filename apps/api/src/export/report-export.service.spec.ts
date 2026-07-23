@@ -3,7 +3,7 @@ import { GoalOperator, IndicatorValidationStatus, ReportStatus, RoleName } from 
 import { AuthenticatedUser } from '../auth/types/authenticated-user.interface';
 import { UnitAccessService } from '../common/services/unit-access.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { ExportSettingsService } from './export-settings.service';
+import { PlatformSettingsService } from './platform-settings.service';
 import { ReportExportService } from './report-export.service';
 
 describe('ReportExportService', () => {
@@ -68,9 +68,9 @@ describe('ReportExportService', () => {
 
     const prisma = { reportInstance: { findUnique: findUniqueMock } } as unknown as PrismaService;
     const unitAccessService = { assertReadAccess: assertReadAccessMock } as unknown as UnitAccessService;
-    const exportSettingsService = { getSettings: getSettingsMock } as unknown as ExportSettingsService;
+    const platformSettingsService = { getSettings: getSettingsMock } as unknown as PlatformSettingsService;
 
-    service = new ReportExportService(prisma, unitAccessService, exportSettingsService);
+    service = new ReportExportService(prisma, unitAccessService, platformSettingsService);
   });
 
   test('throws NotFoundException when the report does not exist', async () => {

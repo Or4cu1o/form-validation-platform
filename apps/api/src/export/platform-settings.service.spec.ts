@@ -1,8 +1,8 @@
 import { PrismaService } from '../prisma/prisma.service';
-import { ExportSettingsService } from './export-settings.service';
+import { PlatformSettingsService } from './platform-settings.service';
 
-describe('ExportSettingsService', () => {
-  let service: ExportSettingsService;
+describe('PlatformSettingsService', () => {
+  let service: PlatformSettingsService;
   let findFirstMock: jest.Mock;
   let createMock: jest.Mock;
   let updateMock: jest.Mock;
@@ -14,36 +14,44 @@ describe('ExportSettingsService', () => {
     const prisma = {
       systemSetting: { findFirst: findFirstMock, create: createMock, update: updateMock },
     } as unknown as PrismaService;
-    service = new ExportSettingsService(prisma);
+    service = new PlatformSettingsService(prisma);
   });
+
+  const defaultSettings = {
+    id: 'settings-1',
+    exportNamingPattern: '{SIGLA_UNIDADE}_{DATA_ISO}',
+    slaElaborationBusinessDay: 6,
+    slaReviewBusinessDay: 8,
+    slaApprovalBusinessDay: 10,
+    slaReprovalExtensionDays: 2,
+    slaDeflatorScore: 2,
+  };
 
   describe('getSettings', () => {
     test('returns the existing settings row when one already exists', async () => {
-      const existing = { id: 'settings-1', exportNamingPattern: '{SIGLA_UNIDADE}_{DATA_ISO}' };
-      findFirstMock.mockResolvedValue(existing);
+      findFirstMock.mockResolvedValue(defaultSettings);
 
       const result = await service.getSettings();
 
-      expect(result).toBe(existing);
+      expect(result).toBe(defaultSettings);
       expect(createMock).not.toHaveBeenCalled();
     });
 
     test('creates default settings when none exist yet', async () => {
       findFirstMock.mockResolvedValue(null);
-      const created = { id: 'settings-1', exportNamingPattern: 'default' };
-      createMock.mockResolvedValue(created);
+      createMock.mockResolvedValue(defaultSettings);
 
       const result = await service.getSettings();
 
       expect(createMock).toHaveBeenCalledWith({ data: {} });
-      expect(result).toBe(created);
+      expect(result).toBe(defaultSettings);
     });
   });
 
   describe('updateSettings', () => {
-    test('updates the existing (or freshly created) settings row', async () => {
-      findFirstMock.mockResolvedValue({ id: 'settings-1' });
-      updateMock.mockResolvedValue({ id: 'settings-1', exportNamingPattern: 'novo-padrao' });
+    test('updates only the fields provided in the dto', async () => {
+      findFirstMock.mockResolvedValue(defaultSettings);
+      updateMock.mockResolvedValue({ ...defaultSettings, exportNamingPattern: 'novo-padrao' });
 
       await service.updateSettings({ exportNamingPattern: 'novo-padrao' });
 
@@ -51,6 +59,39 @@ describe('ExportSettingsService', () => {
         where: { id: 'settings-1' },
         data: { exportNamingPattern: 'novo-padrao' },
       });
+    });
+
+    test('updates SLA thresholds and deflator score together', async () => {
+      findFirstMock.mockResolvedValue(defaultSettings);
+      updateMock.mockResolvedValue({ ...defaultSettings, slaElaborationBusinessDay: 5 });
+
+      await service.updateSettings({
+        slaElaborationBusinessDay: 5,
+        slaReviewBusinessDay: 9,
+        slaApprovalBusinessDay: 11,
+        slaReprovalExtensionDays: 3,
+        slaDeflatorScore: 1.5,
+      });
+
+      expect(updateMock).toHaveBeenCalledWith({
+        where: { id: 'settings-1' },
+        data: {
+          slaElaborationBusinessDay: 5,
+          slaReviewBusinessDay: 9,
+          slaApprovalBusinessDay: 11,
+          slaReprovalExtensionDays: 3,
+          slaDeflatorScore: 1.5,
+        },
+      });
+    });
+
+    test('rejects when the resulting SLA thresholds are not strictly increasing', async () => {
+      findFirstMock.mockResolvedValue(defaultSettings);
+
+      await expect(service.updateSettings({ slaElaborationBusinessDay: 9 })).rejects.toThrow(
+        'Os prazos de SLA devem ser crescentes: elaboracao < revisao < aprovacao.',
+      );
+      expect(updateMock).not.toHaveBeenCalled();
     });
   });
 });

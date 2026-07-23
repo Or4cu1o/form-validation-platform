@@ -184,6 +184,10 @@ model FormIndicator {
   isResidentState   Boolean      @default(false) @map("is_resident_state")
   order             Int          @default(0)
   isActive          Boolean      @default(true) @map("is_active")
+  // Peso em pontos somado a nota do relatorio quando este indicador e aprovado.
+  // A soma dos pesos dos indicadores ativos de um FormTemplate deve ser
+  // exatamente 10 (validado em FormIndicatorsService, nao no banco).
+  scoreWeight       Decimal      @default(0) @map("score_weight") @db.Decimal(5, 2)
   createdAt         DateTime     @default(now()) @map("created_at")
   updatedAt         DateTime     @updatedAt @map("updated_at")
 
@@ -211,6 +215,15 @@ model ReportInstance {
   submittedForReviewAt   DateTime?    @map("submitted_for_review_at")
   submittedForApprovalAt DateTime?    @map("submitted_for_approval_at")
   concludedAt            DateTime?    @map("concluded_at")
+
+  // Nota final do relatorio, calculada uma unica vez em finalizeReport()
+  // (Secao 5) e congelada — nao e recalculada se pesos/settings mudarem depois.
+  indicatorScore     Decimal? @map("indicator_score") @db.Decimal(5, 2)
+  slaDeflatorApplied Decimal? @map("sla_deflator_applied") @db.Decimal(5, 2)
+  totalScore         Decimal? @map("total_score") @db.Decimal(5, 2)
+  isElaborationOnTime Boolean? @map("is_elaboration_on_time")
+  isReviewOnTime      Boolean? @map("is_review_on_time")
+
   createdAt              DateTime     @default(now()) @map("created_at")
   updatedAt              DateTime     @updatedAt @map("updated_at")
 
@@ -306,7 +319,19 @@ model ValidationRecord {
 model SystemSetting {
   id                  String   @id @default(uuid())
   exportNamingPattern String   @default("Relatorio Operacional de Tecnologia da Informacao - {SIGLA_UNIDADE} - {DATA_ISO}") @map("export_naming_pattern")
-  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  // Prazos de SLA (em dia util do mes) — antes hardcoded em report-lifecycle.service.ts
+  slaElaborationBusinessDay Int @default(6) @map("sla_elaboration_business_day")
+  slaReviewBusinessDay      Int @default(8) @map("sla_review_business_day")
+  slaApprovalBusinessDay    Int @default(10) @map("sla_approval_business_day")
+  // Extensao de prazo (em dias uteis) concedida quando o relatorio e reprovado
+  // na validacao — antes hardcoded em validation.service.ts
+  slaReprovalExtensionDays Int @default(2) @map("sla_reproval_extension_days")
+  // Pontos deduzidos da nota do relatorio por etapa (elaboracao/revisao) que
+  // ultrapassar o prazo. Aplicado ate 2x (uma por etapa) em finalizeReport().
+  slaDeflatorScore Decimal @default(2) @map("sla_deflator_score") @db.Decimal(5, 2)
+
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("system_settings")
 }

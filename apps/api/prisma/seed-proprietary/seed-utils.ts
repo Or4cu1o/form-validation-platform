@@ -18,6 +18,27 @@ export interface IndicatorSeed {
   order: number;
 }
 
+// Distribui `total` pontos igualmente entre `count` indicadores usando o
+// metodo dos maiores restos, para que a soma exata bata com `total` mesmo
+// quando a divisao nao e exata (ex.: 10/13 indicadores no formulario N3).
+// Duplicado de apps/api/src/forms/score-distribution.util.ts: os scripts de
+// seed rodam isolados do resto do backend (ver comentario no topo deste
+// arquivo) e nao importam de src/, entao a logica e replicada aqui.
+export function distributeScoreWeights(count: number, total = 10): number[] {
+  if (count <= 0) {
+    return [];
+  }
+
+  const totalCents = Math.round(total * 100);
+  const baseCents = Math.floor(totalCents / count);
+  const remainderCents = totalCents - baseCents * count;
+
+  return Array.from({ length: count }, (_, index) => {
+    const cents = baseCents + (index < remainderCents ? 1 : 0);
+    return cents / 100;
+  });
+}
+
 export interface TopicSeed {
   title: string;
   order: number;
@@ -37,11 +58,20 @@ export async function seedFormTemplate(prisma: PrismaClient, template: FormTempl
     create: { name: template.name, description: template.description },
   });
 
+  // Peso de cada indicador distribuido igualmente para que a soma total do
+  // template bata exatamente 10 (regra de negocio validada em
+  // FormIndicatorsService.updateScores), na mesma ordem em que os
+  // indicadores aparecem nos topicos abaixo.
+  const totalIndicatorCount = template.topics.reduce((sum, topic) => sum + topic.indicators.length, 0);
+  const scoreWeights = distributeScoreWeights(totalIndicatorCount);
+  let scoreWeightIndex = 0;
+
   for (const topic of template.topics) {
     const formTopic = await upsertTopic(prisma, formTemplate.id, topic.title, topic.order);
 
     for (const indicator of topic.indicators) {
-      await upsertIndicator(prisma, formTopic.id, indicator);
+      await upsertIndicator(prisma, formTopic.id, indicator, scoreWeights[scoreWeightIndex]);
+      scoreWeightIndex++;
     }
   }
 
@@ -56,7 +86,12 @@ async function upsertTopic(prisma: PrismaClient, formTemplateId: string, title: 
   return prisma.formTopic.create({ data: { formTemplateId, title, order } });
 }
 
-async function upsertIndicator(prisma: PrismaClient, formTopicId: string, indicator: IndicatorSeed) {
+async function upsertIndicator(
+  prisma: PrismaClient,
+  formTopicId: string,
+  indicator: IndicatorSeed,
+  scoreWeight: number,
+) {
   const existing = await prisma.formIndicator.findFirst({ where: { formTopicId, title: indicator.title } });
   const data = {
     objective: indicator.objective,
@@ -67,6 +102,7 @@ async function upsertIndicator(prisma: PrismaClient, formTopicId: string, indica
     isResidentState: indicator.isResidentState ?? false,
     order: indicator.order,
     isActive: true,
+    scoreWeight,
   };
 
   if (existing) {

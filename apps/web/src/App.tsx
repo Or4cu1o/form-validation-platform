@@ -1,4 +1,5 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AdminLayout } from './components/layout/AdminLayout';
 import { AppShell } from './components/layout/AppShell';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
@@ -35,9 +36,12 @@ function App() {
               </Route>
 
               <Route element={<ProtectedRoute allowedRoles={['ADMINISTRADOR']} />}>
-                <Route path="/admin/acessos" element={<AdminAccessPage />} />
-                <Route path="/admin/formularios" element={<AdminFormsPage />} />
-                <Route path="/admin/configuracoes" element={<AdminSettingsPage />} />
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<Navigate to="acessos" replace />} />
+                  <Route path="acessos" element={<AdminAccessPage />} />
+                  <Route path="formularios" element={<AdminFormsPage />} />
+                  <Route path="configuracoes" element={<AdminSettingsPage />} />
+                </Route>
               </Route>
             </Route>
           </Route>

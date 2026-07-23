@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { ClipboardList, LayoutDashboard, LogOut, ShieldCheck, Sliders, Users } from 'lucide-react';
+import { ClipboardList, LayoutDashboard, LogOut, ShieldCheck, Sliders } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { ROLE_LABEL } from '../../lib/status';
 import { cn } from '../../lib/cn';
@@ -33,14 +33,8 @@ const NAV_ITEMS: NavItem[] = [
     roles: ['APROVADOR', 'ADMINISTRADOR'],
   },
   {
-    to: '/admin/acessos',
-    label: 'Controle de Acesso',
-    icon: Users,
-    roles: ['ADMINISTRADOR'],
-  },
-  {
-    to: '/admin/formularios',
-    label: 'Formulários',
+    to: '/admin',
+    label: 'Administração',
     icon: Sliders,
     roles: ['ADMINISTRADOR'],
   },

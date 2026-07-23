@@ -47,7 +47,7 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: /Painel Central/ })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Elaboração e Revisão/ })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Mesa de Validação/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Controle de Acesso/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Administração/ })).not.toBeInTheDocument();
   });
 
   it('shows all nav items for an ADMINISTRADOR', () => {
@@ -60,8 +60,7 @@ describe('AppShell', () => {
     renderShell();
 
     expect(screen.getByRole('link', { name: /Mesa de Validação/ })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Controle de Acesso/ })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Formulários/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Administração/ })).toBeInTheDocument();
   });
 
   it('renders the user name and role, and logs out on click', () => {

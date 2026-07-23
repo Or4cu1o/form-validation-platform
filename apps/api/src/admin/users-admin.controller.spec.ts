@@ -54,7 +54,7 @@ describe('UsersAdminController', () => {
       matricula: '10010',
       nome: 'Novo',
       sobrenome: 'Usuario',
-      email: 'novo@rtio.local',
+      email: 'novo@formops.local',
       password: 'senha-forte-123',
       role: RoleName.ELABORADOR,
       primaryUnitId: 'unit-1',

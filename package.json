@@ -1,10 +1,18 @@
 {
-  "name": "rtio",
+  "name": "formops",
   "private": true,
   "workspaces": [
     "apps/*"
   ],
   "scripts": {
+    "start": "node scripts/manage.js start",
+    "status": "node scripts/manage.js status",
+    "restart": "node scripts/manage.js restart",
+    "stop": "node scripts/manage.js stop",
+    "down": "node scripts/manage.js down",
+    "deploy": "node scripts/manage.js deploy",
+    "seed:proprietary": "node scripts/manage.js seed",
+    "formops": "node scripts/manage.js",
     "dev:api": "npm run start:dev --workspace=apps/api",
     "dev:web": "npm run dev --workspace=apps/web",
     "build": "npm run build --workspace=apps/api && npm run build --workspace=apps/web",

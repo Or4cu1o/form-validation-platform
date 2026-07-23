@@ -18,7 +18,7 @@ export class EmailService {
 
   constructor(private readonly configService: ConfigService) {
     const host = this.configService.get<string>('SMTP_HOST');
-    this.fromAddress = this.configService.get<string>('SMTP_FROM') ?? 'RTIO <no-reply@example.com>';
+    this.fromAddress = this.configService.get<string>('SMTP_FROM') ?? 'FormOps <no-reply@example.com>';
 
     if (!host) {
       this.transporter = null;

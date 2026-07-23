@@ -21,7 +21,7 @@ describe('EvidenceService', () => {
     matricula: '10002',
     nome: 'Elias',
     sobrenome: 'Elaborador',
-    email: 'elaborador@rtio.local',
+    email: 'elaborador@formops.local',
     role: RoleName.ELABORADOR,
     primaryUnitId: 'unit-1',
   };

@@ -7,7 +7,7 @@ describe('assertCanEditReportData', () => {
   const report = { id: 'report-1', unitId: 'unit-1', status: ReportStatus.PENDENTE } as ReportInstance;
 
   function buildUser(role: RoleName, primaryUnitId = 'unit-1'): AuthenticatedUser {
-    return { id: 'user-1', matricula: '1', nome: 'A', sobrenome: 'B', email: 'a@rtio.local', role, primaryUnitId };
+    return { id: 'user-1', matricula: '1', nome: 'A', sobrenome: 'B', email: 'a@formops.local', role, primaryUnitId };
   }
 
   test('throws when the user does not belong to the report unit', () => {

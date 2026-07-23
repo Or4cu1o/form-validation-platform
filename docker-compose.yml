@@ -9,7 +9,7 @@ services:
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - rtio_postgres_data:/var/lib/postgresql/data
+      - formops_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
@@ -27,7 +27,7 @@ services:
       - "${MINIO_API_PORT:-9000}:9000"
       - "${MINIO_CONSOLE_PORT:-9001}:9001"
     volumes:
-      - rtio_minio_data:/data
+      - formops_minio_data:/data
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 5s
@@ -65,5 +65,5 @@ services:
       - api
 
 volumes:
-  rtio_postgres_data:
-  rtio_minio_data:
+  formops_postgres_data:
+  formops_minio_data:

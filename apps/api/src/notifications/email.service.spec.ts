@@ -30,7 +30,7 @@ describe('EmailService', () => {
     });
 
     test('logs instead of sending when SMTP_HOST is not configured', async () => {
-      await service.send({ to: ['user@rtio.local'], subject: 'Assunto', html: '<p>Corpo</p>' });
+      await service.send({ to: ['user@formops.local'], subject: 'Assunto', html: '<p>Corpo</p>' });
 
       expect(sendMailMock).not.toHaveBeenCalled();
     });
@@ -48,19 +48,19 @@ describe('EmailService', () => {
     beforeEach(() => {
       service = new EmailService(
         buildConfigService({
-          SMTP_HOST: 'smtp.rtio.local',
+          SMTP_HOST: 'smtp.formops.local',
           SMTP_PORT: '587',
           SMTP_SECURE: 'false',
           SMTP_USER: 'user',
           SMTP_PASSWORD: 'pass',
-          SMTP_FROM: 'RTIO <no-reply@rtio.local>',
+          SMTP_FROM: 'FormOps <no-reply@formops.local>',
         }),
       );
     });
 
     test('creates a real nodemailer transporter with the configured SMTP settings', () => {
       expect(createTransport).toHaveBeenCalledWith({
-        host: 'smtp.rtio.local',
+        host: 'smtp.formops.local',
         port: 587,
         secure: false,
         auth: { user: 'user', pass: 'pass' },
@@ -68,20 +68,20 @@ describe('EmailService', () => {
     });
 
     test('sends the email through the transporter with the configured from address', async () => {
-      await service.send({ to: ['user@rtio.local'], subject: 'Assunto', html: '<p>Corpo</p>' });
+      await service.send({ to: ['user@formops.local'], subject: 'Assunto', html: '<p>Corpo</p>' });
 
       expect(sendMailMock).toHaveBeenCalledWith({
-        from: 'RTIO <no-reply@rtio.local>',
-        to: 'user@rtio.local',
+        from: 'FormOps <no-reply@formops.local>',
+        to: 'user@formops.local',
         subject: 'Assunto',
         html: '<p>Corpo</p>',
       });
     });
 
     test('joins multiple recipients with a comma', async () => {
-      await service.send({ to: ['a@rtio.local', 'b@rtio.local'], subject: 'Assunto', html: '<p>Corpo</p>' });
+      await service.send({ to: ['a@formops.local', 'b@formops.local'], subject: 'Assunto', html: '<p>Corpo</p>' });
 
-      expect(sendMailMock).toHaveBeenCalledWith(expect.objectContaining({ to: 'a@rtio.local, b@rtio.local' }));
+      expect(sendMailMock).toHaveBeenCalledWith(expect.objectContaining({ to: 'a@formops.local, b@formops.local' }));
     });
   });
 });

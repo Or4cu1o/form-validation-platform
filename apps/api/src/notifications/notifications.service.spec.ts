@@ -20,7 +20,7 @@ describe('NotificationsService', () => {
   });
 
   test('notifySlaOverdue sends only to ELABORADOR of the report unit', async () => {
-    findManyMock.mockResolvedValue([{ email: 'elaborador@rtio.local' }]);
+    findManyMock.mockResolvedValue([{ email: 'elaborador@formops.local' }]);
 
     await service.notifySlaOverdue({ ...report, unit });
 
@@ -28,11 +28,11 @@ describe('NotificationsService', () => {
       where: { primaryUnitId: unit.id, role: { in: [RoleName.ELABORADOR] }, isActive: true },
       select: { email: true },
     });
-    expect(sendMock).toHaveBeenCalledWith(expect.objectContaining({ to: ['elaborador@rtio.local'] }));
+    expect(sendMock).toHaveBeenCalledWith(expect.objectContaining({ to: ['elaborador@formops.local'] }));
   });
 
   test('notifySubmittedForApproval queries org-wide APROVADOR without unit filter', async () => {
-    findManyMock.mockResolvedValue([{ email: 'aprovador@rtio.local' }]);
+    findManyMock.mockResolvedValue([{ email: 'aprovador@formops.local' }]);
 
     await service.notifySubmittedForApproval(report, unit);
 
@@ -40,11 +40,11 @@ describe('NotificationsService', () => {
       where: { role: { in: [RoleName.APROVADOR] }, isActive: true },
       select: { email: true },
     });
-    expect(sendMock).toHaveBeenCalledWith(expect.objectContaining({ to: ['aprovador@rtio.local'] }));
+    expect(sendMock).toHaveBeenCalledWith(expect.objectContaining({ to: ['aprovador@formops.local'] }));
   });
 
   test('notifyReportReproved sends to both ELABORADOR and REVISOR of the unit', async () => {
-    findManyMock.mockResolvedValue([{ email: 'a@rtio.local' }, { email: 'b@rtio.local' }]);
+    findManyMock.mockResolvedValue([{ email: 'a@formops.local' }, { email: 'b@formops.local' }]);
 
     await service.notifyReportReproved(report, unit);
 
@@ -52,7 +52,7 @@ describe('NotificationsService', () => {
       where: { primaryUnitId: unit.id, role: { in: [RoleName.ELABORADOR, RoleName.REVISOR] }, isActive: true },
       select: { email: true },
     });
-    expect(sendMock).toHaveBeenCalledWith(expect.objectContaining({ to: ['a@rtio.local', 'b@rtio.local'] }));
+    expect(sendMock).toHaveBeenCalledWith(expect.objectContaining({ to: ['a@formops.local', 'b@formops.local'] }));
   });
 
   test('does not call EmailService.send with an empty recipient list resolved upstream', async () => {

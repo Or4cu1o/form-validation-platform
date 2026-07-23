@@ -3,7 +3,7 @@ import { ApiError } from './api-error';
 import { clearStoredToken, getStoredToken } from './token-storage';
 import type { ApiErrorBody } from '../types/api';
 
-export const UNAUTHORIZED_EVENT = 'rtio:unauthorized';
+export const UNAUTHORIZED_EVENT = 'formops:unauthorized';
 
 function extractMessage(body: ApiErrorBody | null, fallback: string): string {
   if (!body) return fallback;

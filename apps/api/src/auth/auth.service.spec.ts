@@ -18,7 +18,7 @@ describe('AuthService', () => {
     matricula: '10001',
     nome: 'Teste',
     sobrenome: 'Usuario',
-    email: 'teste@rtio.local',
+    email: 'teste@formops.local',
     passwordHash: 'hashed-password',
     role: RoleName.ELABORADOR,
     primaryUnitId: 'unit-1',

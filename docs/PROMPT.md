@@ -1,4 +1,4 @@
-### **Especificação de Requisitos: Plataforma de Governança e Automação de Indicadores de TI (Sistema RTIO)**
+### **Especificação de Requisitos: Plataforma de Governança e Automação de Indicadores de TI (Plataforma FormOps)**
 
 #### **1. Visão Geral e Objetivo Operacional**
 

@@ -23,6 +23,6 @@ describe('token-storage', () => {
 
   it('does not use localStorage', () => {
     setStoredToken('abc.def.ghi');
-    expect(localStorage.getItem('rtio.accessToken')).toBeNull();
+    expect(localStorage.getItem('formops.accessToken')).toBeNull();
   });
 });

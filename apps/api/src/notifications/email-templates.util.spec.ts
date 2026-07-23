@@ -35,7 +35,7 @@ describe('email-templates.util', () => {
 
   test('buildReportReprovedEmail falls back to generic message when no SLA extension date', () => {
     const email = buildReportReprovedEmail(baseReport, unit);
-    expect(email.html).toContain('Consulte o RTIO para o novo prazo');
+    expect(email.html).toContain('Consulte o FormOps para o novo prazo');
   });
 
   test('buildReportReprovedEmail includes formatted extension date when present', () => {

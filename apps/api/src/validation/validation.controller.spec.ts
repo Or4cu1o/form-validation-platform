@@ -14,7 +14,7 @@ describe('ValidationController', () => {
     matricula: '10004',
     nome: 'Ana',
     sobrenome: 'Aprovadora',
-    email: 'aprovador@rtio.local',
+    email: 'aprovador@formops.local',
     role: RoleName.APROVADOR,
     primaryUnitId: 'unit-matriz',
   };

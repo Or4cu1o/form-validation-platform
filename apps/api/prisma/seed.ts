@@ -4,7 +4,7 @@ import * as bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 const SALT_ROUNDS = 10;
-const DEV_TEST_PASSWORD = 'RtioTeste@2026';
+const DEV_TEST_PASSWORD = 'FormOpsTeste@2026';
 
 const DEV_ROLE_USERS: Array<{ matricula: string; nome: string; sobrenome: string; role: RoleName }> = [
   { matricula: '10001', nome: 'Teste', sobrenome: 'Observador', role: RoleName.OBSERVADOR },

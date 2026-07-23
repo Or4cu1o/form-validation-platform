@@ -5,7 +5,7 @@ describe('validateEnv', () => {
     DATABASE_URL: 'postgresql://user:pass@localhost:5432/db',
     JWT_SECRET: 'secret',
     INITIAL_ADMIN_MATRICULA: '00001',
-    INITIAL_ADMIN_EMAIL: 'admin@rtio.local',
+    INITIAL_ADMIN_EMAIL: 'admin@formops.local',
     INITIAL_ADMIN_PASSWORD: 'strong-password',
   };
 

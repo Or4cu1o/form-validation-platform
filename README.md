@@ -1,13 +1,42 @@
-# Plataforma de Governança e Automação de Indicadores de TI
+# FormOps — Plataforma de Governança e Automação de Formulários
 
-Plataforma web para digitalizar, centralizar e auditar o processo de confecção do
-Relatório Operacional de TI das unidades da organização, substituindo o modelo
-legado baseado em planilhas/documentos manuais por um fluxo governado por prazos
-em dias úteis, trilha de auditoria e um motor de formulários dinâmicos
-administrável sem código.
+**FormOps** é uma plataforma web corporativa para digitalizar, centralizar, automatizar e auditar o preenchimento de formulários e a geração de relatórios operacionais. Ela substitui o modelo legado baseado em planilhas/documentos manuais por um fluxo governado por prazos em dias úteis, trilhas de auditoria, integrações (API, Webhooks, n8n) e um motor de formulários dinâmicos administrável sem código.
 
-Consulte [`docs/PROMPT.md`](./docs/PROMPT.md) para a especificação de requisitos completa
-que orientou o desenho do produto.
+Consulte [`docs/PROMPT.md`](./docs/PROMPT.md) para a especificação de requisitos completa que orientou o desenho do produto.
+
+---
+
+## ⚡ Gerenciamento Rápido via NPM
+
+A aplicação conta com um orquestrador integrado em Node.js (`scripts/manage.js`) mapeado diretamente nos comandos nativos do `npm`:
+
+```bash
+# Iniciar a aplicação e containers em background (com validação e healthcheck)
+npm start
+
+# Verificar status da aplicação, ocupação de portas, containers Docker e credenciais
+npm run status
+
+# Reiniciar aplicação e containers Docker
+npm run restart
+
+# Parar apenas a aplicação local (mantém banco de dados rodando)
+npm run stop
+
+# Parar aplicação e derrubar containers Docker
+npm run down
+
+# Executar um deploy limpo do zero (limpa cache/volumes/node_modules e reinstala)
+npm run deploy
+
+# Semeia formulários proprietários no banco de dados (N1/N3)
+npm run seed:proprietary
+
+# Validar pré-requisitos da stack e listar comandos
+npm run formops
+```
+
+---
 
 ## Stack
 
@@ -18,9 +47,12 @@ que orientou o desenho do produto.
 | Autenticação | JWT (Bearer), RBAC por role e unidade |
 | Armazenamento de evidências | S3-compatível (MinIO em dev) |
 | E-mail | SMTP via Nodemailer (modo log quando não configurado) |
+| Orquestrador CLI | Node.js nativo (`scripts/manage.js`) |
 | Testes backend | Jest (unit + integração contra Postgres real) |
 | Testes frontend | Vitest + Testing Library |
 | Monorepo | npm workspaces (`apps/api`, `apps/web`) |
+
+---
 
 ## Arquitetura
 
@@ -28,19 +60,17 @@ que orientou o desenho do produto.
 apps/
   api/    NestJS — API REST, regras de negócio, Prisma, cron de abertura de período
   web/    React (Vite) — SPA consumindo a API via Bearer JWT
+scripts/
+  manage.js  Orquestrador em Node.js para gerenciamento dos serviços
 ```
 
-- **Estado Residente**: dados estruturais estáveis (inventário, licenças, links)
-  são clonados automaticamente na virada do mês pelo motor de cron do backend,
-  reduzindo retrabalho do Elaborador.
-- **Engine No-Code de Formulários**: Administradores criam/editam templates,
-  tópicos e indicadores (com fórmula, operador e meta) sem alterar código —
-  mudanças refletem nos relatórios futuros mantendo o histórico intacto.
-- **Soft delete obrigatório**: nenhuma entidade (usuário, unidade, indicador) é
-  fisicamente excluída — desativação via `is_active = false`, preservando a
-  integridade referencial histórica.
+- **Estado Residente**: dados estruturais estáveis (inventário, licenças, links) são clonados automaticamente na virada do mês pelo motor de cron do backend, reduzindo retrabalho do Elaborador.
+- **Engine No-Code de Formulários**: Administradores criam/editam templates, tópicos e indicadores (com fórmula, operador e meta) sem alterar código — mudanças refletem nos relatórios futuros mantendo o histórico intacto.
+- **Soft Delete Obrigatório**: nenhuma entidade (usuário, unidade, indicador) é fisicamente excluída — desativação via `is_active = false`, preservando a integridade referencial histórica.
 
-### Roles (RBAC)
+---
+
+### Roles e Governança (RBAC)
 
 | Role | Escopo |
 |---|---|
@@ -50,99 +80,69 @@ apps/
 | Aprovador | Audita e aprova/reprova indicadores de todas as unidades |
 | Administrador | Acesso irrestrito — usuários, unidades e Engine No-Code |
 
-O RBAC do frontend é só UX (oculta ações que o usuário não pode fazer); a
-autorização real é sempre revalidada pelo backend em cada requisição — ver
-[`apps/web/SECURITY-NOTES.md`](./apps/web/SECURITY-NOTES.md#2-rbac-no-frontend-é-apenas-ux--a-autorização-real-é-sempre-no-backend).
+O RBAC do frontend é focado em UX (oculta ações que o usuário não pode fazer); a autorização real é sempre revalidada pelo backend em cada requisição — ver [`apps/web/SECURITY-NOTES.md`](./apps/web/SECURITY-NOTES.md#2-rbac-no-frontend-é-apenas-ux--a-autorização-real-é-sempre-no-backend).
 
-## Pré-requisitos
+---
 
-- Node.js 20+ (desenvolvido/testado com Node 24)
-- Docker + Docker Compose (Postgres, MinIO)
-- npm (workspaces do monorepo)
+## Configuração Inicial
 
-## Configuração
-
-1. Copie o `.env` de exemplo e ajuste os valores (segredos, credenciais do
-   admin inicial, portas):
+1. Copie o `.env` de exemplo e ajuste os valores (segredos, credenciais do admin inicial, portas):
 
    ```bash
    cp .env.example .env
    ```
 
-2. Suba a infraestrutura local (Postgres + MinIO):
+2. Inicie a aplicação com um único comando:
 
    ```bash
-   npm run docker:up
+   npm start
    ```
 
-3. Instale as dependências do monorepo:
+   *O comando subirá o Postgres + MinIO via Docker, aplicará migrações Prisma, executará os seeds iniciais, iniciará API e Web em background e validará o Healthcheck.*
 
-   ```bash
-   npm install
-   ```
+---
 
-4. Rode as migrations e o seed do banco:
+## Credenciais Padrão (Desenvolvimento)
 
-   ```bash
-   cd apps/api
-   npx prisma migrate deploy
-   npx prisma db seed
-   ```
+Ao executar `npm start` ou `npm run status` em modo `NODE_ENV=development`, o console exibirá:
 
-   O seed garante o admin inicial (`INITIAL_ADMIN_*` do `.env`) e, fora de
-   `NODE_ENV=production`, cinco usuários de teste — um por role — todos com
-   senha `RtioTeste@2026` (ver saída do comando no console).
+- **Administrador Inicial**: Matrícula `00001` | `admin@agirsaude.org.br` | Senha: `Agir@2026`
+- **Usuários de Teste (Senha padrão: `FormOpsTeste@2026`)**:
+  - Observador: `observador@matriz.dev` (Matrícula `10001`)
+  - Elaborador: `elaborador@matriz.dev` (Matrícula `10002`)
+  - Revisor: `revisor@matriz.dev` (Matrícula `10003`)
+  - Aprovador: `aprovador@matriz.dev` (Matrícula `10004`)
+  - Administrador: `administrador@matriz.dev` (Matrícula `10005`)
 
-## Rodando em desenvolvimento
-
-Cada app roda em seu próprio processo; as portas vêm do `.env` raiz
-(`API_PORT`, `WEB_PORT`):
-
-```bash
-# terminal 1 — API (carrega o .env da raiz do monorepo)
-npm run dev:api
-
-# terminal 2 — frontend
-npm run dev:web
-```
-
-O frontend lê `VITE_API_URL` do `.env` para saber onde está a API
-(default `http://localhost:7000` se a variável não estiver definida).
+---
 
 ## Testes
 
 ```bash
-# suíte completa (api + web)
+# Suíte completa (api + web)
 npm test
 
-# só a API (Jest — precisa de DATABASE_URL apontando para um Postgres real,
-# os testes de integração não usam mocks)
+# Apenas a API (Jest — integração com Postgres)
 npm run test --workspace=apps/api
 
-# só o frontend (Vitest + Testing Library)
+# Apenas o frontend (Vitest + Testing Library)
 npm run test --workspace=apps/web -- run
 
-# cobertura do frontend
+# Cobertura do frontend
 npm run test --workspace=apps/web -- run --coverage
 ```
 
-## Build de produção
+---
+
+## Build de Produção
 
 ```bash
 npm run build
 ```
 
-Compila `apps/api` (NestJS → `dist/`) e `apps/web` (Vite → `dist/`, SPA
-estática). Cabeçalhos de segurança HTTP (CSP, HSTS, etc.) devem ser
-configurados na camada de hospedagem/reverse proxy — ver
-[`apps/web/SECURITY-NOTES.md`](./apps/web/SECURITY-NOTES.md#7-cabeçalhos-de-segurança-http-csp-hsts-etc).
+Compila `apps/api` (NestJS → `dist/`) e `apps/web` (Vite → `dist/`, SPA estática). Cabeçalhos de segurança HTTP (CSP, HSTS, etc.) devem ser configurados na camada de hospedagem/reverse proxy — ver [`apps/web/SECURITY-NOTES.md`](./apps/web/SECURITY-NOTES.md#7-cabeçalhos-de-segurança-http-csp-hsts-etc).
 
-## Segurança
-
-Decisões e riscos aceitos deliberadamente estão documentados em:
-
-- [`apps/api/SECURITY-NOTES.md`](./apps/api/SECURITY-NOTES.md)
-- [`apps/web/SECURITY-NOTES.md`](./apps/web/SECURITY-NOTES.md)
+---
 
 ## Licença
 

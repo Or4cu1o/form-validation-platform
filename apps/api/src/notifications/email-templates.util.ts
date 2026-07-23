@@ -41,7 +41,7 @@ function sanitizeHeaderValue(value: string): string {
 
 export function buildSlaOverdueEmail(report: ReportInstance, unit: Unit): EmailContent {
   return {
-    subject: `[RTIO] SLA estourado — ${sanitizeHeaderValue(unit.sigla)} (${periodoLabel(report.referenceMonth)})`,
+    subject: `[FormOps] SLA estourado — ${sanitizeHeaderValue(unit.sigla)} (${periodoLabel(report.referenceMonth)})`,
     html: wrapHtml('Estouro de SLA de elaboracao', [
       `O relatorio da unidade <strong>${unitLabel(unit)}</strong> referente a ${periodoLabel(report.referenceMonth)} continua PENDENTE apos o 5o dia util do periodo.`,
       'Regularize a elaboracao o quanto antes para evitar impacto no restante do fluxo.',
@@ -51,39 +51,39 @@ export function buildSlaOverdueEmail(report: ReportInstance, unit: Unit): EmailC
 
 export function buildSubmittedForReviewEmail(report: ReportInstance, unit: Unit): EmailContent {
   return {
-    subject: `[RTIO] Relatorio disponivel para revisao — ${sanitizeHeaderValue(unit.sigla)} (${periodoLabel(report.referenceMonth)})`,
+    subject: `[FormOps] Relatorio disponivel para revisao — ${sanitizeHeaderValue(unit.sigla)} (${periodoLabel(report.referenceMonth)})`,
     html: wrapHtml('Relatorio pronto para revisao', [
       `O Elaborador da unidade <strong>${unitLabel(unit)}</strong> submeteu o relatorio de ${periodoLabel(report.referenceMonth)} para revisao.`,
-      'Acesse o RTIO para revisar os indicadores preenchidos.',
+      'Acesse o FormOps para revisar os indicadores preenchidos.',
     ]),
   };
 }
 
 export function buildSubmittedForApprovalEmail(report: ReportInstance, unit: Unit): EmailContent {
   return {
-    subject: `[RTIO] Relatorio pendente de aprovacao — ${sanitizeHeaderValue(unit.sigla)} (${periodoLabel(report.referenceMonth)})`,
+    subject: `[FormOps] Relatorio pendente de aprovacao — ${sanitizeHeaderValue(unit.sigla)} (${periodoLabel(report.referenceMonth)})`,
     html: wrapHtml('Relatorio pronto para a Mesa de Validacao', [
       `O relatorio da unidade <strong>${unitLabel(unit)}</strong> referente a ${periodoLabel(report.referenceMonth)} foi revisado e aguarda contraprova do Aprovador.`,
-      'Acesse a Mesa de Validacao Tecnica no RTIO para dar seguimento.',
+      'Acesse a Mesa de Validacao Tecnica no FormOps para dar seguimento.',
     ]),
   };
 }
 
 export function buildReportReprovedEmail(report: ReportInstance, unit: Unit): EmailContent {
   return {
-    subject: `[RTIO] Relatorio reprovado — ${sanitizeHeaderValue(unit.sigla)} (${periodoLabel(report.referenceMonth)})`,
+    subject: `[FormOps] Relatorio reprovado — ${sanitizeHeaderValue(unit.sigla)} (${periodoLabel(report.referenceMonth)})`,
     html: wrapHtml('Relatorio reprovado pela Mesa de Validacao', [
       `O relatorio da unidade <strong>${unitLabel(unit)}</strong> referente a ${periodoLabel(report.referenceMonth)} foi reprovado e retornou para correcao.`,
       report.slaExtensionDueDate
         ? `Novo prazo de correcao: <strong>${report.slaExtensionDueDate.toISOString().slice(0, 10)}</strong>.`
-        : 'Consulte o RTIO para o novo prazo de correcao.',
+        : 'Consulte o FormOps para o novo prazo de correcao.',
     ]),
   };
 }
 
 export function buildReportConcludedEmail(report: ReportInstance, unit: Unit): EmailContent {
   return {
-    subject: `[RTIO] Relatorio aprovado — ${sanitizeHeaderValue(unit.sigla)} (${periodoLabel(report.referenceMonth)})`,
+    subject: `[FormOps] Relatorio aprovado — ${sanitizeHeaderValue(unit.sigla)} (${periodoLabel(report.referenceMonth)})`,
     html: wrapHtml('Relatorio aprovado', [
       `O relatorio da unidade <strong>${unitLabel(unit)}</strong> referente a ${periodoLabel(report.referenceMonth)} foi aprovado pela Mesa de Validacao Tecnica.`,
       'Nenhuma acao adicional e necessaria.',

@@ -61,7 +61,10 @@ describe('ReportLifecycleService (integration)', () => {
       data: { sigla: 'LIFE-TEST', nome: 'Unidade Teste Lifecycle', level: UnitLevel.A, formTemplateId },
     });
     unitId = unit.id;
-  });
+    // Timeout maior que o default de 5s: sob a suite completa em paralelo
+    // (varios workers Jest disputando o mesmo Postgres), as 5 chamadas
+    // sequenciais deste setup podem passar do limite padrao.
+  }, 20000);
 
   afterAll(async () => {
     await prisma.indicatorResponse.deleteMany({ where: { reportInstance: { unitId } } });

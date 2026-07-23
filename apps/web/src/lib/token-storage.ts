@@ -2,7 +2,7 @@
 // limpo ao fechar a aba, reduzindo a janela de exposicao a roubo via XSS. A API deste projeto
 // eh stateless (Bearer JWT, sem cookie de sessao), entao sessionStorage eh o compromisso
 // pratico dado o design existente do backend; ver SECURITY-NOTES.md para o tradeoff completo.
-const TOKEN_KEY = 'rtio.accessToken';
+const TOKEN_KEY = 'formops.accessToken';
 
 export function getStoredToken(): string | null {
   return sessionStorage.getItem(TOKEN_KEY);

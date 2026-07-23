@@ -21,7 +21,7 @@ describe('S3Service', () => {
 
   function buildConfigService(): ConfigService {
     const values: Record<string, string> = {
-      S3_BUCKET: 'rtio-evidencias',
+      S3_BUCKET: 'formops-evidencias',
       S3_ENDPOINT: 'http://localhost:9000',
       S3_ACCESS_KEY: 'minioadmin',
       S3_SECRET_KEY: 'minioadmin',

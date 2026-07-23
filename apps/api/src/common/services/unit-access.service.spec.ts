@@ -9,7 +9,7 @@ describe('UnitAccessService', () => {
   let findManyMock: jest.Mock;
 
   function buildUser(role: RoleName, primaryUnitId = 'unit-primary'): AuthenticatedUser {
-    return { id: 'user-1', matricula: '1', nome: 'A', sobrenome: 'B', email: 'a@rtio.local', role, primaryUnitId };
+    return { id: 'user-1', matricula: '1', nome: 'A', sobrenome: 'B', email: 'a@formops.local', role, primaryUnitId };
   }
 
   beforeEach(() => {

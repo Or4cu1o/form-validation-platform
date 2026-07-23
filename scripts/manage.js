@@ -234,18 +234,18 @@ function stopApp() {
 
   // Limpeza de porta adicional
   [process.env.API_PORT, process.env.WEB_PORT].forEach(port => {
-    const pids = runOut(`fuser ${port}/tcp 2>/dev/null`);
-    if (pids) {
-      pids.split(/\s+/).forEach(p => {
-        if (p && p !== String(process.pid)) {
-          const cmd = runOut(`ps -o comm= -p ${p}`);
-          if (/node|vite/i.test(cmd)) {
-            console.log(`Matando processo residual ${p} (${cmd}) na porta ${port}...`);
+    if (!port) return;
+    try {
+      const pids = runOut(`lsof -ti :${port}`);
+      if (pids) {
+        pids.split(/\s+/).forEach(p => {
+          if (p && p !== String(process.pid)) {
+            console.log(`Matando processo residual ${p} na porta ${port}...`);
             try { process.kill(Number(p), 'SIGKILL'); } catch {}
           }
-        }
-      });
-    }
+        });
+      }
+    } catch {}
   });
 
   console.log(`${GREEN}✓ Processos locais finalizados.${RESET}`);
@@ -473,10 +473,17 @@ async function commandRestart() {
   console.log(`${CYAN}=== Reiniciando a aplicação e os containers Docker (Modo Restart) ===${RESET}`);
   stopApp();
   if (DOCKER_COMPOSE) {
-    console.log(`Reiniciando containers Docker (${DOCKER_COMPOSE} restart)...`);
+    console.log(`Garantindo containers Docker ativos (${DOCKER_COMPOSE} up -d)...`);
+    run(`${DOCKER_COMPOSE} up -d postgres minio`, { ignoreError: true });
     run(`${DOCKER_COMPOSE} restart`, { ignoreError: true });
   }
   await waitAndMigrateDb();
+
+  if (process.env.SEED_ON_START === 'true' || process.env.NODE_ENV === 'development') {
+    console.log('Executando carga de dados de seed...');
+    run('npm run seed --workspace=apps/api', { ignoreError: true });
+  }
+
   const { apiPid, webPid } = startProcesses();
   await validateHealth(apiPid, webPid);
 }

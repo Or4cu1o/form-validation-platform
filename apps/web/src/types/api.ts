@@ -75,9 +75,22 @@ export interface FormIndicator {
   isResidentState: boolean;
   order: number;
   isActive: boolean;
+  scoreWeight: string;
   createdAt: string;
   updatedAt: string;
   formTopic?: FormTopic;
+}
+
+export interface IndicatorScoreItem {
+  id: string;
+  title: string;
+  scoreWeight: number;
+}
+
+export interface IndicatorScoreSummary {
+  items: IndicatorScoreItem[];
+  sum: number;
+  target: number;
 }
 
 export interface FormTopic {

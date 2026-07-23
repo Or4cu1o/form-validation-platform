@@ -28,6 +28,7 @@ describe('AdminFormsPage', () => {
   it('shows a placeholder until a template is selected, then loads its detail', async () => {
     vi.mocked(formsApi.listFormTemplates).mockResolvedValueOnce([template]);
     vi.mocked(formsApi.getFormTemplate).mockResolvedValueOnce(template);
+    vi.mocked(formsApi.getIndicatorScores).mockResolvedValue({ items: [], sum: 0, target: 10 });
     vi.mocked(settingsApi.getPlatformSettings).mockResolvedValueOnce({
       id: 'settings-1',
       exportNamingPattern: '{SIGLA UNIDADE} - {data iso}',

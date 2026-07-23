@@ -1,5 +1,5 @@
 import { apiGet, apiSend, buildQueryString } from '../lib/api-client';
-import type { FormIndicator, FormTemplate, FormTopic, GoalOperator } from '../types/api';
+import type { FormIndicator, FormTemplate, FormTopic, GoalOperator, IndicatorScoreSummary } from '../types/api';
 
 export interface FormTemplateInput {
   name: string;
@@ -76,4 +76,26 @@ export function deactivateFormIndicator(id: string): Promise<FormIndicator> {
 
 export function activateFormIndicator(id: string): Promise<FormIndicator> {
   return apiSend<FormIndicator>('PATCH', `/form-indicators/${encodeURIComponent(id)}/activate`);
+}
+
+export function getIndicatorScores(templateId: string): Promise<IndicatorScoreSummary> {
+  return apiGet<IndicatorScoreSummary>(`/form-templates/${encodeURIComponent(templateId)}/indicator-scores`);
+}
+
+export function updateIndicatorScores(
+  templateId: string,
+  weights: Array<{ indicatorId: string; scoreWeight: number }>,
+): Promise<IndicatorScoreSummary> {
+  return apiSend<IndicatorScoreSummary>(
+    'PATCH',
+    `/form-templates/${encodeURIComponent(templateId)}/indicator-scores`,
+    { weights },
+  );
+}
+
+export function distributeIndicatorScores(templateId: string): Promise<IndicatorScoreSummary> {
+  return apiSend<IndicatorScoreSummary>(
+    'POST',
+    `/form-templates/${encodeURIComponent(templateId)}/indicator-scores/distribute`,
+  );
 }

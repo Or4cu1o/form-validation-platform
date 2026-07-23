@@ -9,11 +9,14 @@ import {
   deactivateFormIndicator,
   deactivateFormTemplate,
   deactivateFormTopic,
+  distributeIndicatorScores,
   getFormTemplate,
+  getIndicatorScores,
   listFormTemplates,
   updateFormIndicator,
   updateFormTemplate,
   updateFormTopic,
+  updateIndicatorScores,
 } from './forms';
 import { apiGet, apiSend } from '../lib/api-client';
 
@@ -93,5 +96,24 @@ describe('forms api', () => {
     expect(apiSend).toHaveBeenCalledWith('PATCH', '/form-indicators/indicator-1/deactivate');
     await activateFormIndicator('indicator-1');
     expect(apiSend).toHaveBeenCalledWith('PATCH', '/form-indicators/indicator-1/activate');
+  });
+
+  it('getIndicatorScores fetches the score summary for a template', async () => {
+    vi.mocked(apiGet).mockResolvedValueOnce({} as never);
+    await getIndicatorScores('template-1');
+    expect(apiGet).toHaveBeenCalledWith('/form-templates/template-1/indicator-scores');
+  });
+
+  it('updateIndicatorScores patches the weights for a template', async () => {
+    vi.mocked(apiSend).mockResolvedValueOnce({} as never);
+    const weights = [{ indicatorId: 'indicator-1', scoreWeight: 10 }];
+    await updateIndicatorScores('template-1', weights);
+    expect(apiSend).toHaveBeenCalledWith('PATCH', '/form-templates/template-1/indicator-scores', { weights });
+  });
+
+  it('distributeIndicatorScores posts to the distribute endpoint', async () => {
+    vi.mocked(apiSend).mockResolvedValueOnce({} as never);
+    await distributeIndicatorScores('template-1');
+    expect(apiSend).toHaveBeenCalledWith('POST', '/form-templates/template-1/indicator-scores/distribute');
   });
 });

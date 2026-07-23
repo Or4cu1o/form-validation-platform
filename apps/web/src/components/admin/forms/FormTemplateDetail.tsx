@@ -12,6 +12,7 @@ import { GOAL_OPERATOR_SYMBOL } from '../../../lib/status';
 import { formatNumber } from '../../../lib/format';
 import { TopicFormModal } from './TopicFormModal';
 import { IndicatorFormModal } from './IndicatorFormModal';
+import { IndicatorScorePanel } from './IndicatorScorePanel';
 import type { FormIndicator, FormTemplate, FormTopic } from '../../../types/api';
 
 type TopicModalState = { type: 'create' } | { type: 'edit'; topic: FormTopic } | null;
@@ -66,6 +67,8 @@ export function FormTemplateDetail({ template }: Props) {
       </div>
 
       {topics.length === 0 && <EmptyState title="Sem tópicos" description="Crie o primeiro tópico deste formulário." />}
+
+      <IndicatorScorePanel templateId={template.id} />
 
       {topics
         .sort((a, b) => a.order - b.order)

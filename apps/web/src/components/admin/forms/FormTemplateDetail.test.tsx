@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, screen } from '@testing-library/react';
 import { fireEvent } from '@testing-library/react';
 import { FormTemplateDetail } from './FormTemplateDetail';
@@ -51,6 +51,10 @@ const templateWithTopics: FormTemplate = {
 };
 
 describe('FormTemplateDetail', () => {
+  beforeEach(() => {
+    vi.mocked(formsApi.getIndicatorScores).mockResolvedValue({ items: [], sum: 0, target: 10 });
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });

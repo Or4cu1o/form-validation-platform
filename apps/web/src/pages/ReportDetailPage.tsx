@@ -6,7 +6,7 @@ import { PageHeader } from '../components/layout/PageHeader';
 import { IndicatorResponseCard } from '../components/report-detail/IndicatorResponseCard';
 import { useAuth } from '../context/AuthContext';
 import { getReportInstance, submitForApproval, submitForReview } from '../api/reports';
-import { formatDateTime, formatReferenceMonth } from '../lib/format';
+import { formatDateTime, formatNumber, formatReferenceMonth } from '../lib/format';
 import { REPORT_STATUS_LABEL, REPORT_STATUS_TONE } from '../lib/status';
 import { Button, EmptyState, ProgressMeter, Spinner, StatusBadge, useToast } from '../components/ui';
 import type { ProgressMeterSegment } from '../components/ui';
@@ -125,6 +125,19 @@ export function ReportDetailPage() {
       />
 
       <div className="flex flex-col gap-8 p-8">
+        {report.status === 'CONCLUIDO' && report.totalScore !== null && (
+          <div className="flex items-center justify-between rounded-lg border border-border bg-paper-raised px-5 py-4 shadow-panel">
+            <div>
+              <p className="text-sm font-semibold text-ink">Nota final do relatório</p>
+              <p className="text-xs text-ink-muted">
+                Indicadores: {formatNumber(report.indicatorScore ?? '0')} · Deflator de SLA: -
+                {formatNumber(report.slaDeflatorApplied ?? '0')}
+              </p>
+            </div>
+            <p className="data-figure text-2xl font-semibold text-ink">{formatNumber(report.totalScore)} / 10</p>
+          </div>
+        )}
+
         {wasReproved && (
           <div className="flex items-start gap-3 rounded border-l-4 border-status-reprovado bg-status-reprovado/5 px-4 py-3 text-sm text-ink shadow-xs">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-status-reprovado" aria-hidden="true" />

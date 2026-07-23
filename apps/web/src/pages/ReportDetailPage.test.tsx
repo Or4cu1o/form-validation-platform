@@ -75,4 +75,33 @@ describe('ReportDetailPage', () => {
 
     expect(await screen.findByText('Sem indicadores')).toBeInTheDocument();
   });
+
+  it('shows the final score banner for a concluded report', async () => {
+    vi.mocked(AuthContextModule.useAuth).mockReturnValue({ user: makeUser(), isLoading: false, login: vi.fn(), logout: vi.fn() });
+    vi.mocked(reportsApi.getReportInstance).mockResolvedValueOnce(
+      makeReportInstance({
+        status: 'CONCLUIDO',
+        indicatorScore: '10',
+        slaDeflatorApplied: '2',
+        totalScore: '8',
+        isElaborationOnTime: true,
+        isReviewOnTime: false,
+      }),
+    );
+
+    renderDetail();
+
+    expect(await screen.findByText('Nota final do relatório')).toBeInTheDocument();
+    expect(screen.getByText('8 / 10')).toBeInTheDocument();
+  });
+
+  it('does not show the final score banner when the report has not been scored yet', async () => {
+    vi.mocked(AuthContextModule.useAuth).mockReturnValue({ user: makeUser(), isLoading: false, login: vi.fn(), logout: vi.fn() });
+    vi.mocked(reportsApi.getReportInstance).mockResolvedValueOnce(makeReportInstance({ status: 'PENDENTE' }));
+
+    renderDetail();
+
+    await screen.findByText(/Elaboração e revisão/);
+    expect(screen.queryByText('Nota final do relatório')).not.toBeInTheDocument();
+  });
 });

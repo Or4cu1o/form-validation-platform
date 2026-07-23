@@ -176,6 +176,11 @@ export interface ReportInstance {
   submittedForReviewAt: string | null;
   submittedForApprovalAt: string | null;
   concludedAt: string | null;
+  indicatorScore: string | null;
+  slaDeflatorApplied: string | null;
+  totalScore: string | null;
+  isElaborationOnTime: boolean | null;
+  isReviewOnTime: boolean | null;
   createdAt: string;
   updatedAt: string;
   unit: Unit;

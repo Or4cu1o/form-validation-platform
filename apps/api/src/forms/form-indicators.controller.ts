@@ -1,8 +1,9 @@
-import { Body, Controller, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { RoleName } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CreateFormIndicatorDto } from './dto/create-form-indicator.dto';
 import { UpdateFormIndicatorDto } from './dto/update-form-indicator.dto';
+import { UpdateIndicatorScoresDto } from './dto/update-indicator-scores.dto';
 import { FormIndicatorsService } from './form-indicators.service';
 
 @Roles(RoleName.ADMINISTRADOR)
@@ -28,5 +29,20 @@ export class FormIndicatorsController {
   @Patch('form-indicators/:id/activate')
   activate(@Param('id') id: string) {
     return this.formIndicatorsService.setActive(id, true);
+  }
+
+  @Get('form-templates/:templateId/indicator-scores')
+  getScores(@Param('templateId') templateId: string) {
+    return this.formIndicatorsService.getScores(templateId);
+  }
+
+  @Patch('form-templates/:templateId/indicator-scores')
+  updateScores(@Param('templateId') templateId: string, @Body() dto: UpdateIndicatorScoresDto) {
+    return this.formIndicatorsService.updateScores(templateId, dto);
+  }
+
+  @Post('form-templates/:templateId/indicator-scores/distribute')
+  distributeScores(@Param('templateId') templateId: string) {
+    return this.formIndicatorsService.distributeEvenly(templateId);
   }
 }

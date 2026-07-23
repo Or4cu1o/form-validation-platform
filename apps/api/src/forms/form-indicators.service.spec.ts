@@ -9,6 +9,9 @@ describe('FormIndicatorsService', () => {
   let createMock: jest.Mock;
   let findUniqueIndicatorMock: jest.Mock;
   let updateMock: jest.Mock;
+  let findUniqueTemplateMock: jest.Mock;
+  let findManyIndicatorMock: jest.Mock;
+  let transactionMock: jest.Mock;
 
   const validDto = {
     title: 'Chamados: Backlog',
@@ -24,9 +27,19 @@ describe('FormIndicatorsService', () => {
     createMock = jest.fn();
     findUniqueIndicatorMock = jest.fn();
     updateMock = jest.fn();
+    findUniqueTemplateMock = jest.fn();
+    findManyIndicatorMock = jest.fn();
+    transactionMock = jest.fn().mockImplementation((ops: unknown[]) => Promise.all(ops));
     const prisma = {
       formTopic: { findUnique: findUniqueTopicMock },
-      formIndicator: { create: createMock, findUnique: findUniqueIndicatorMock, update: updateMock },
+      formTemplate: { findUnique: findUniqueTemplateMock },
+      formIndicator: {
+        create: createMock,
+        findUnique: findUniqueIndicatorMock,
+        findMany: findManyIndicatorMock,
+        update: updateMock,
+      },
+      $transaction: transactionMock,
     } as unknown as PrismaService;
     service = new FormIndicatorsService(prisma);
   });
@@ -100,6 +113,117 @@ describe('FormIndicatorsService', () => {
       await service.setActive('indicator-1', false);
 
       expect(updateMock).toHaveBeenCalledWith({ where: { id: 'indicator-1' }, data: { isActive: false } });
+    });
+  });
+
+  describe('getScores', () => {
+    test('throws NotFoundException when the template does not exist', async () => {
+      findUniqueTemplateMock.mockResolvedValue(null);
+
+      await expect(service.getScores('missing-template')).rejects.toThrow(NotFoundException);
+    });
+
+    test('returns the active indicators with their current weight and sum', async () => {
+      findUniqueTemplateMock.mockResolvedValue({ id: 'template-1' });
+      findManyIndicatorMock.mockResolvedValue([
+        { id: 'ind-1', title: 'A', scoreWeight: 4 },
+        { id: 'ind-2', title: 'B', scoreWeight: 6 },
+      ]);
+
+      const result = await service.getScores('template-1');
+
+      expect(result).toEqual({
+        items: [
+          { id: 'ind-1', title: 'A', scoreWeight: 4 },
+          { id: 'ind-2', title: 'B', scoreWeight: 6 },
+        ],
+        sum: 10,
+        target: 10,
+      });
+    });
+  });
+
+  describe('updateScores', () => {
+    beforeEach(() => {
+      findUniqueTemplateMock.mockResolvedValue({ id: 'template-1' });
+    });
+
+    test('rejects when the provided indicator ids do not match the active set', async () => {
+      findManyIndicatorMock.mockResolvedValue([{ id: 'ind-1', title: 'A', scoreWeight: 0 }]);
+
+      await expect(
+        service.updateScores('template-1', { weights: [{ indicatorId: 'ind-other', scoreWeight: 10 }] }),
+      ).rejects.toThrow(BadRequestException);
+      expect(transactionMock).not.toHaveBeenCalled();
+    });
+
+    test('rejects when the sum of weights is not 10', async () => {
+      findManyIndicatorMock.mockResolvedValue([
+        { id: 'ind-1', title: 'A', scoreWeight: 0 },
+        { id: 'ind-2', title: 'B', scoreWeight: 0 },
+      ]);
+
+      await expect(
+        service.updateScores('template-1', {
+          weights: [
+            { indicatorId: 'ind-1', scoreWeight: 4 },
+            { indicatorId: 'ind-2', scoreWeight: 4 },
+          ],
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(transactionMock).not.toHaveBeenCalled();
+    });
+
+    test('persists the weights when they cover the active set and sum to 10', async () => {
+      findManyIndicatorMock
+        .mockResolvedValueOnce([
+          { id: 'ind-1', title: 'A', scoreWeight: 0 },
+          { id: 'ind-2', title: 'B', scoreWeight: 0 },
+        ])
+        .mockResolvedValueOnce([
+          { id: 'ind-1', title: 'A', scoreWeight: 3 },
+          { id: 'ind-2', title: 'B', scoreWeight: 7 },
+        ]);
+
+      const result = await service.updateScores('template-1', {
+        weights: [
+          { indicatorId: 'ind-1', scoreWeight: 3 },
+          { indicatorId: 'ind-2', scoreWeight: 7 },
+        ],
+      });
+
+      expect(transactionMock).toHaveBeenCalled();
+      expect(updateMock).toHaveBeenCalledWith({ where: { id: 'ind-1' }, data: { scoreWeight: 3 } });
+      expect(updateMock).toHaveBeenCalledWith({ where: { id: 'ind-2' }, data: { scoreWeight: 7 } });
+      expect(result.sum).toBe(10);
+    });
+  });
+
+  describe('distributeEvenly', () => {
+    test('rejects when there are no active indicators', async () => {
+      findUniqueTemplateMock.mockResolvedValue({ id: 'template-1' });
+      findManyIndicatorMock.mockResolvedValue([]);
+
+      await expect(service.distributeEvenly('template-1')).rejects.toThrow(BadRequestException);
+    });
+
+    test('splits the score evenly across active indicators', async () => {
+      findUniqueTemplateMock.mockResolvedValue({ id: 'template-1' });
+      findManyIndicatorMock
+        .mockResolvedValueOnce([
+          { id: 'ind-1', title: 'A', scoreWeight: 0 },
+          { id: 'ind-2', title: 'B', scoreWeight: 0 },
+        ])
+        .mockResolvedValueOnce([
+          { id: 'ind-1', title: 'A', scoreWeight: 5 },
+          { id: 'ind-2', title: 'B', scoreWeight: 5 },
+        ]);
+
+      const result = await service.distributeEvenly('template-1');
+
+      expect(updateMock).toHaveBeenCalledWith({ where: { id: 'ind-1' }, data: { scoreWeight: 5 } });
+      expect(updateMock).toHaveBeenCalledWith({ where: { id: 'ind-2' }, data: { scoreWeight: 5 } });
+      expect(result.sum).toBe(10);
     });
   });
 });

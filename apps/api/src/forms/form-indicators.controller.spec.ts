@@ -7,6 +7,9 @@ describe('FormIndicatorsController', () => {
   let createMock: jest.Mock;
   let updateMock: jest.Mock;
   let setActiveMock: jest.Mock;
+  let getScoresMock: jest.Mock;
+  let updateScoresMock: jest.Mock;
+  let distributeEvenlyMock: jest.Mock;
 
   const dto = {
     title: 'Chamados: Backlog',
@@ -21,10 +24,16 @@ describe('FormIndicatorsController', () => {
     createMock = jest.fn().mockResolvedValue({ id: 'indicator-1' });
     updateMock = jest.fn().mockResolvedValue({ id: 'indicator-1' });
     setActiveMock = jest.fn().mockResolvedValue({ id: 'indicator-1' });
+    getScoresMock = jest.fn().mockResolvedValue({ items: [], sum: 0, target: 10 });
+    updateScoresMock = jest.fn().mockResolvedValue({ items: [], sum: 10, target: 10 });
+    distributeEvenlyMock = jest.fn().mockResolvedValue({ items: [], sum: 10, target: 10 });
     const formIndicatorsService = {
       create: createMock,
       update: updateMock,
       setActive: setActiveMock,
+      getScores: getScoresMock,
+      updateScores: updateScoresMock,
+      distributeEvenly: distributeEvenlyMock,
     } as unknown as FormIndicatorsService;
     controller = new FormIndicatorsController(formIndicatorsService);
   });
@@ -51,5 +60,25 @@ describe('FormIndicatorsController', () => {
     await controller.activate('indicator-1');
 
     expect(setActiveMock).toHaveBeenCalledWith('indicator-1', true);
+  });
+
+  test('getScores delegates to FormIndicatorsService.getScores with the template id', async () => {
+    await controller.getScores('template-1');
+
+    expect(getScoresMock).toHaveBeenCalledWith('template-1');
+  });
+
+  test('updateScores delegates to FormIndicatorsService.updateScores with the template id and dto', async () => {
+    const scoresDto = { weights: [{ indicatorId: 'indicator-1', scoreWeight: 10 }] };
+
+    await controller.updateScores('template-1', scoresDto);
+
+    expect(updateScoresMock).toHaveBeenCalledWith('template-1', scoresDto);
+  });
+
+  test('distributeScores delegates to FormIndicatorsService.distributeEvenly with the template id', async () => {
+    await controller.distributeScores('template-1');
+
+    expect(distributeEvenlyMock).toHaveBeenCalledWith('template-1');
   });
 });

@@ -1,4 +1,5 @@
 import { GoalOperator, UnitLevel } from '@prisma/client';
+import { PlatformSettingsService } from '../export/platform-settings.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ReportLifecycleService } from './report-lifecycle.service';
 
@@ -7,7 +8,8 @@ import { ReportLifecycleService } from './report-lifecycle.service';
 // dev em vez de dublês, para pegar bugs reais de constraint/transacao.
 describe('ReportLifecycleService (integration)', () => {
   const prisma = new PrismaService();
-  const service = new ReportLifecycleService(prisma);
+  const platformSettingsService = new PlatformSettingsService(prisma);
+  const service = new ReportLifecycleService(prisma, platformSettingsService);
 
   let unitId: string;
   let formTemplateId: string;

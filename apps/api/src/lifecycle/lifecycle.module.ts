@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
+import { ExportModule } from '../export/export.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { LifecycleCronService } from './lifecycle-cron.service';
 import { ReportLifecycleService } from './report-lifecycle.service';
 
 @Module({
-  imports: [NotificationsModule],
+  imports: [NotificationsModule, ExportModule],
   providers: [ReportLifecycleService, LifecycleCronService],
   exports: [ReportLifecycleService],
 })

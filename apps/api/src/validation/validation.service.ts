@@ -1,6 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { IndicatorValidationStatus, ReportStatus, ValidationVerdict } from '@prisma/client';
 import { AuthenticatedUser } from '../auth/types/authenticated-user.interface';
+import { PlatformSettingsService } from '../export/platform-settings.service';
 import { addBusinessDays, getMandatoryNationalHolidays } from '../lifecycle/business-days.util';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -16,6 +17,7 @@ export class ValidationService {
     private readonly prisma: PrismaService,
     private readonly s3Service: S3Service,
     private readonly notificationsService: NotificationsService,
+    private readonly platformSettingsService: PlatformSettingsService,
   ) {}
 
   async validateIndicator(indicatorResponseId: string, user: AuthenticatedUser, dto: ValidateIndicatorDto) {
@@ -99,10 +101,12 @@ export class ValidationService {
       (response) => response.validationStatus === IndicatorValidationStatus.REPROVADO,
     );
 
+    const settings = await this.platformSettingsService.getSettings();
+
     const updated = await this.prisma.runWithAuditActor(user.id, async (tx) => {
       if (hasRejection) {
         const holidays = getMandatoryNationalHolidays(new Date().getUTCFullYear());
-        const slaExtensionDueDate = addBusinessDays(new Date(), 2, holidays);
+        const slaExtensionDueDate = addBusinessDays(new Date(), settings.slaReprovalExtensionDays, holidays);
         await tx.indicatorResponse.updateMany({
           where: { reportInstanceId },
           data: { validationStatus: IndicatorValidationStatus.EM_REVISAO },

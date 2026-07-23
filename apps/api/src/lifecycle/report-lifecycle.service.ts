@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ReportStatus, Unit } from '@prisma/client';
+import { PlatformSettingsService } from '../export/platform-settings.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { getMandatoryNationalHolidays, getNthBusinessDayOfMonth, toUtcMidnight } from './business-days.util';
 
@@ -16,7 +17,10 @@ function previousMonthUtc(referenceMonth: Date): Date {
 export class ReportLifecycleService {
   private readonly logger = new Logger(ReportLifecycleService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly platformSettingsService: PlatformSettingsService,
+  ) {}
 
   async openPeriodForUnit(unit: Unit, referenceMonth: Date) {
     if (!unit.formTemplateId) {
@@ -35,10 +39,16 @@ export class ReportLifecycleService {
     const year = normalizedMonth.getUTCFullYear();
     const monthIndex0 = normalizedMonth.getUTCMonth();
     const holidays = getMandatoryNationalHolidays(year);
+    const settings = await this.platformSettingsService.getSettings();
 
-    const elaborationDueDate = getNthBusinessDayOfMonth(year, monthIndex0, 6, holidays);
-    const reviewDueDate = getNthBusinessDayOfMonth(year, monthIndex0, 8, holidays);
-    const approvalDueDate = getNthBusinessDayOfMonth(year, monthIndex0, 10, holidays);
+    const elaborationDueDate = getNthBusinessDayOfMonth(
+      year,
+      monthIndex0,
+      settings.slaElaborationBusinessDay,
+      holidays,
+    );
+    const reviewDueDate = getNthBusinessDayOfMonth(year, monthIndex0, settings.slaReviewBusinessDay, holidays);
+    const approvalDueDate = getNthBusinessDayOfMonth(year, monthIndex0, settings.slaApprovalBusinessDay, holidays);
 
     const indicators = await this.prisma.formIndicator.findMany({
       where: { isActive: true, formTopic: { isActive: true, formTemplateId: unit.formTemplateId } },

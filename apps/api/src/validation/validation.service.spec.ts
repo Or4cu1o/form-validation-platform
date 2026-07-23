@@ -1,6 +1,7 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { IndicatorValidationStatus, ReportStatus, RoleName, ValidationVerdict } from '@prisma/client';
 import { AuthenticatedUser } from '../auth/types/authenticated-user.interface';
+import { PlatformSettingsService } from '../export/platform-settings.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../storage/s3.service';
@@ -62,8 +63,17 @@ describe('ValidationService', () => {
       notifyReportReproved: notifyReprovedMock,
       notifyReportConcluded: notifyConcludedMock,
     } as unknown as NotificationsService;
+    const platformSettingsService = {
+      getSettings: jest.fn().mockResolvedValue({
+        slaElaborationBusinessDay: 6,
+        slaReviewBusinessDay: 8,
+        slaApprovalBusinessDay: 10,
+        slaReprovalExtensionDays: 2,
+        slaDeflatorScore: 2,
+      }),
+    } as unknown as PlatformSettingsService;
 
-    service = new ValidationService(prisma, s3Service, notificationsService);
+    service = new ValidationService(prisma, s3Service, notificationsService, platformSettingsService);
   });
 
   describe('validateIndicator', () => {

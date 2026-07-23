@@ -4,6 +4,7 @@ import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { AdminAccessPage } from './pages/AdminAccessPage';
 import { AdminFormsPage } from './pages/AdminFormsPage';
+import { AdminSettingsPage } from './pages/AdminSettingsPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -36,6 +37,7 @@ function App() {
               <Route element={<ProtectedRoute allowedRoles={['ADMINISTRADOR']} />}>
                 <Route path="/admin/acessos" element={<AdminAccessPage />} />
                 <Route path="/admin/formularios" element={<AdminFormsPage />} />
+                <Route path="/admin/configuracoes" element={<AdminSettingsPage />} />
               </Route>
             </Route>
           </Route>

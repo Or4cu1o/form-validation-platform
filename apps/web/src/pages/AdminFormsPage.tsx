@@ -1,60 +1,15 @@
 import { useState } from 'react';
-import type { FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PenSquare, Plus, Power, PowerOff } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { TemplateFormModal } from '../components/admin/forms/TemplateFormModal';
 import { FormTemplateDetail } from '../components/admin/forms/FormTemplateDetail';
 import { activateFormTemplate, deactivateFormTemplate, getFormTemplate, listFormTemplates } from '../api/forms';
-import { getPlatformSettings, updatePlatformSettings } from '../api/settings';
-import { Button, EmptyState, Field, Input, Spinner, StatusBadge, useToast } from '../components/ui';
+import { Button, EmptyState, Spinner, StatusBadge, useToast } from '../components/ui';
 import { cn } from '../lib/cn';
 import type { FormTemplate } from '../types/api';
 
 type ModalState = { type: 'create' } | { type: 'edit'; template: FormTemplate } | null;
-
-function ExportSettingsPanel() {
-  const queryClient = useQueryClient();
-  const { showToast } = useToast();
-  const { data: settings } = useQuery({ queryKey: ['platform-settings'], queryFn: getPlatformSettings });
-  const [pattern, setPattern] = useState('');
-
-  const mutation = useMutation({
-    mutationFn: (value: string) => updatePlatformSettings({ exportNamingPattern: value }),
-    onSuccess: () => {
-      showToast('Padrão de nomenclatura atualizado.', 'success');
-      queryClient.invalidateQueries({ queryKey: ['platform-settings'] });
-    },
-    onError: () => showToast('Não foi possível atualizar o padrão.', 'error'),
-  });
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    mutation.mutate(pattern || settings?.exportNamingPattern || '');
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="flex items-end gap-3 rounded-lg border border-border bg-paper-raised p-5 shadow-panel">
-      <div className="flex-1">
-        <Field
-          label="Padrão de nomenclatura de exportação"
-          htmlFor="pattern"
-          hint="Placeholders: {SIGLA UNIDADE} e {data iso}."
-        >
-          <Input
-            id="pattern"
-            placeholder={settings?.exportNamingPattern ?? 'Relatório Operacional de Tecnologia da Informação - {SIGLA UNIDADE} - {data iso}'}
-            value={pattern}
-            onChange={(event) => setPattern(event.target.value)}
-          />
-        </Field>
-      </div>
-      <Button type="submit" size="sm" isLoading={mutation.isPending}>
-        Salvar
-      </Button>
-    </form>
-  );
-}
 
 export function AdminFormsPage() {
   const queryClient = useQueryClient();
@@ -93,8 +48,6 @@ export function AdminFormsPage() {
       />
 
       <div className="flex flex-col gap-6 p-8">
-        <ExportSettingsPanel />
-
         <div className="grid grid-cols-[280px_1fr] gap-6">
           <div className="flex flex-col gap-3">
             <Button size="sm" onClick={() => setModal({ type: 'create' })}>

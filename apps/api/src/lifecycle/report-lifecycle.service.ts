@@ -88,6 +88,7 @@ export class ReportLifecycleService {
             snapshotFormulaExpression: indicator.formulaExpression,
             snapshotGoalOperator: indicator.goalOperator,
             snapshotGoalValue: indicator.goalValue,
+            snapshotScoreWeight: indicator.scoreWeight,
             variableValues: shouldCloneResidentState ? (previousResponse!.variableValues as object) : {},
             isClonedFromResident: shouldCloneResidentState,
           },

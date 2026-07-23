@@ -201,12 +201,21 @@ describe('ValidationService', () => {
       await expect(service.finalizeReport('report-1', user)).rejects.toThrow(BadRequestException);
     });
 
-    test('concludes the report and notifies conclusion when no indicator was rejected', async () => {
+    test('concludes the report and sums the score only for indicators that are both compliant and approved', async () => {
       findUniqueReportInstanceMock.mockResolvedValue({
         id: 'report-1',
         unit: { id: 'unit-matriz' },
         status: ReportStatus.PENDENTE_APROVACAO,
-        indicatorResponses: [{ validationStatus: IndicatorValidationStatus.APROVADO }],
+        elaborationDueDate: new Date('2026-07-08T00:00:00.000Z'),
+        reviewDueDate: new Date('2026-07-10T00:00:00.000Z'),
+        submittedForReviewAt: new Date('2026-07-07T12:00:00.000Z'),
+        submittedForApprovalAt: new Date('2026-07-09T12:00:00.000Z'),
+        indicatorResponses: [
+          { isCompliant: true, validationStatus: IndicatorValidationStatus.APROVADO, snapshotScoreWeight: 6 },
+          // Meta batida, porem reprovada na Mesa de Validacao: nao pontua.
+          { isCompliant: true, validationStatus: IndicatorValidationStatus.APROVADO, snapshotScoreWeight: 4 },
+          { isCompliant: false, validationStatus: IndicatorValidationStatus.APROVADO, snapshotScoreWeight: 10 },
+        ],
       });
       txUpdateReportInstanceMock.mockResolvedValue({ id: 'report-1', status: ReportStatus.CONCLUIDO });
 
@@ -214,10 +223,94 @@ describe('ValidationService', () => {
 
       expect(txUpdateReportInstanceMock).toHaveBeenCalledWith({
         where: { id: 'report-1' },
-        data: { status: ReportStatus.CONCLUIDO, concludedAt: expect.any(Date) },
+        data: {
+          status: ReportStatus.CONCLUIDO,
+          concludedAt: expect.any(Date),
+          indicatorScore: 10,
+          slaDeflatorApplied: 0,
+          totalScore: 10,
+          isElaborationOnTime: true,
+          isReviewOnTime: true,
+        },
       });
       expect(notifyConcludedMock).toHaveBeenCalled();
       expect(notifyReprovedMock).not.toHaveBeenCalled();
+    });
+
+    test('does not count an indicator whose goal was met but was rejected by the Aprovador', async () => {
+      findUniqueReportInstanceMock.mockResolvedValue({
+        id: 'report-1',
+        unit: { id: 'unit-matriz' },
+        status: ReportStatus.PENDENTE_APROVACAO,
+        elaborationDueDate: new Date('2026-07-08T00:00:00.000Z'),
+        reviewDueDate: new Date('2026-07-10T00:00:00.000Z'),
+        submittedForReviewAt: new Date('2026-07-07T12:00:00.000Z'),
+        submittedForApprovalAt: new Date('2026-07-09T12:00:00.000Z'),
+        indicatorResponses: [
+          { isCompliant: true, validationStatus: IndicatorValidationStatus.APROVADO, snapshotScoreWeight: 6 },
+        ],
+      });
+      txUpdateReportInstanceMock.mockResolvedValue({ id: 'report-1', status: ReportStatus.CONCLUIDO });
+
+      await service.finalizeReport('report-1', user);
+
+      expect(txUpdateReportInstanceMock).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ indicatorScore: 6 }) }),
+      );
+    });
+
+    test('applies the SLA deflator once per stage that missed its due date', async () => {
+      findUniqueReportInstanceMock.mockResolvedValue({
+        id: 'report-1',
+        unit: { id: 'unit-matriz' },
+        status: ReportStatus.PENDENTE_APROVACAO,
+        elaborationDueDate: new Date('2026-07-08T00:00:00.000Z'),
+        reviewDueDate: new Date('2026-07-10T00:00:00.000Z'),
+        // Elaboracao no prazo (07 <= 08), revisao fora do prazo (12 > 10).
+        submittedForReviewAt: new Date('2026-07-07T12:00:00.000Z'),
+        submittedForApprovalAt: new Date('2026-07-12T12:00:00.000Z'),
+        indicatorResponses: [
+          { isCompliant: true, validationStatus: IndicatorValidationStatus.APROVADO, snapshotScoreWeight: 10 },
+        ],
+      });
+      txUpdateReportInstanceMock.mockResolvedValue({ id: 'report-1', status: ReportStatus.CONCLUIDO });
+
+      await service.finalizeReport('report-1', user);
+
+      expect(txUpdateReportInstanceMock).toHaveBeenCalledWith({
+        where: { id: 'report-1' },
+        data: {
+          status: ReportStatus.CONCLUIDO,
+          concludedAt: expect.any(Date),
+          indicatorScore: 10,
+          slaDeflatorApplied: 2,
+          totalScore: 8,
+          isElaborationOnTime: true,
+          isReviewOnTime: false,
+        },
+      });
+    });
+
+    test('floors the total score at zero when the deflator exceeds the indicator score', async () => {
+      findUniqueReportInstanceMock.mockResolvedValue({
+        id: 'report-1',
+        unit: { id: 'unit-matriz' },
+        status: ReportStatus.PENDENTE_APROVACAO,
+        elaborationDueDate: new Date('2026-07-08T00:00:00.000Z'),
+        reviewDueDate: new Date('2026-07-10T00:00:00.000Z'),
+        submittedForReviewAt: new Date('2026-07-20T12:00:00.000Z'),
+        submittedForApprovalAt: new Date('2026-07-25T12:00:00.000Z'),
+        indicatorResponses: [
+          { isCompliant: true, validationStatus: IndicatorValidationStatus.APROVADO, snapshotScoreWeight: 1 },
+        ],
+      });
+      txUpdateReportInstanceMock.mockResolvedValue({ id: 'report-1', status: ReportStatus.CONCLUIDO });
+
+      await service.finalizeReport('report-1', user);
+
+      expect(txUpdateReportInstanceMock).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ totalScore: 0, slaDeflatorApplied: 4 }) }),
+      );
     });
 
     test('reopens the report for review and notifies rejection when any indicator was rejected', async () => {

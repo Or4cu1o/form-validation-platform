@@ -2,7 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { IndicatorValidationStatus, ReportStatus, ValidationVerdict } from '@prisma/client';
 import { AuthenticatedUser } from '../auth/types/authenticated-user.interface';
 import { PlatformSettingsService } from '../export/platform-settings.service';
-import { addBusinessDays, getMandatoryNationalHolidays } from '../lifecycle/business-days.util';
+import { addBusinessDays, getMandatoryNationalHolidays, toUtcMidnight } from '../lifecycle/business-days.util';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../storage/s3.service';
@@ -103,6 +103,27 @@ export class ValidationService {
 
     const settings = await this.platformSettingsService.getSettings();
 
+    // A nota so soma o peso de um indicador quando a meta foi batida
+    // (isCompliant) E o indicador foi aprovado na Mesa de Validacao. Meta
+    // batida porem reprovada nao pontua.
+    const indicatorScore = report.indicatorResponses.reduce((sum, response) => {
+      const countsForScore =
+        response.isCompliant === true && response.validationStatus === IndicatorValidationStatus.APROVADO;
+      return countsForScore ? sum + Number(response.snapshotScoreWeight) : sum;
+    }, 0);
+
+    const isElaborationOnTime = Boolean(
+      report.submittedForReviewAt &&
+        toUtcMidnight(report.submittedForReviewAt).getTime() <= report.elaborationDueDate.getTime(),
+    );
+    const isReviewOnTime = Boolean(
+      report.submittedForApprovalAt &&
+        toUtcMidnight(report.submittedForApprovalAt).getTime() <= report.reviewDueDate.getTime(),
+    );
+    const deflator = Number(settings.slaDeflatorScore);
+    const slaDeflatorApplied = (isElaborationOnTime ? 0 : deflator) + (isReviewOnTime ? 0 : deflator);
+    const totalScore = Math.max(0, indicatorScore - slaDeflatorApplied);
+
     const updated = await this.prisma.runWithAuditActor(user.id, async (tx) => {
       if (hasRejection) {
         const holidays = getMandatoryNationalHolidays(new Date().getUTCFullYear());
@@ -123,7 +144,15 @@ export class ValidationService {
 
       return tx.reportInstance.update({
         where: { id: reportInstanceId },
-        data: { status: ReportStatus.CONCLUIDO, concludedAt: new Date() },
+        data: {
+          status: ReportStatus.CONCLUIDO,
+          concludedAt: new Date(),
+          indicatorScore,
+          slaDeflatorApplied,
+          totalScore,
+          isElaborationOnTime,
+          isReviewOnTime,
+        },
       });
     });
 

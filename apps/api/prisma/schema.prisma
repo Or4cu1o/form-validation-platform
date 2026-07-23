@@ -249,6 +249,10 @@ model IndicatorResponse {
   snapshotFormulaExpression String       @map("snapshot_formula_expression")
   snapshotGoalOperator      GoalOperator @map("snapshot_goal_operator")
   snapshotGoalValue         Decimal      @map("snapshot_goal_value") @db.Decimal(18, 4)
+  // Peso de pontuacao no momento da instanciacao do relatorio — mesmo
+  // racional dos demais campos snapshot* acima: edicoes futuras no peso do
+  // FormIndicator nao devem alterar retroativamente a nota de um relatorio ja emitido.
+  snapshotScoreWeight       Decimal      @default(0) @map("snapshot_score_weight") @db.Decimal(5, 2)
 
   variableValues       Json     @default("{}") @map("variable_values")
   calculatedValue      Decimal? @map("calculated_value") @db.Decimal(18, 4)

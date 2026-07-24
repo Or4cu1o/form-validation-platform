@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PenSquare, Plus, Power, PowerOff } from 'lucide-react';
+import { ChevronDown, PenSquare, Plus, Power, PowerOff } from 'lucide-react';
 import {
   activateFormIndicator,
   activateFormTopic,
@@ -10,6 +10,7 @@ import {
 import { Button, EmptyState, StatusBadge, Table, TBody, TD, TH, THead, TR, useToast } from '../../ui';
 import { GOAL_OPERATOR_SYMBOL } from '../../../lib/status';
 import { formatNumber } from '../../../lib/format';
+import { cn } from '../../../lib/cn';
 import { TopicFormModal } from './TopicFormModal';
 import { IndicatorFormModal } from './IndicatorFormModal';
 import { IndicatorScorePanel } from './IndicatorScorePanel';
@@ -27,6 +28,15 @@ export function FormTemplateDetail({ template }: Props) {
   const { showToast } = useToast();
   const [topicModal, setTopicModal] = useState<TopicModalState>(null);
   const [indicatorModal, setIndicatorModal] = useState<IndicatorModalState>(null);
+  const [openTopics, setOpenTopics] = useState<Record<string, boolean>>({});
+
+  function isTopicOpen(topicId: string) {
+    return openTopics[topicId] ?? true;
+  }
+
+  function toggleTopic(topicId: string) {
+    setOpenTopics((prev) => ({ ...prev, [topicId]: !isTopicOpen(topicId) }));
+  }
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['admin-form-template', template.id] });
@@ -72,99 +82,121 @@ export function FormTemplateDetail({ template }: Props) {
 
       {topics
         .sort((a, b) => a.order - b.order)
-        .map((topic) => (
-          <div key={topic.id} className="rounded-lg border border-border bg-paper-raised p-5 shadow-panel">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <h3 className="font-medium text-ink">{topic.title}</h3>
-                <StatusBadge tone={topic.isActive ? 'concluido' : 'pendente'} label={topic.isActive ? 'Ativo' : 'Inativo'} />
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Button variant="ghost" size="sm" onClick={() => setIndicatorModal({ type: 'create', topicId: topic.id })}>
-                  <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                  Indicador
-                </Button>
+        .map((topic) => {
+          const isOpen = isTopicOpen(topic.id);
+          return (
+            <div key={topic.id} className="rounded-lg border border-border bg-paper-raised shadow-panel">
+              <div className="flex items-center justify-between p-5">
                 <button
                   type="button"
-                  title="Editar tópico"
-                  onClick={() => setTopicModal({ type: 'edit', topic })}
-                  className="rounded p-1.5 text-ink-faint hover:bg-paper hover:text-ink"
+                  onClick={() => toggleTopic(topic.id)}
+                  aria-expanded={isOpen}
+                  className="flex flex-1 items-center gap-3 text-left"
                 >
-                  <PenSquare className="h-4 w-4" aria-hidden="true" />
+                  <ChevronDown
+                    className={cn(
+                      'h-4 w-4 shrink-0 text-ink-faint transition-transform duration-fast ease-out-expo',
+                      !isOpen && '-rotate-90',
+                    )}
+                    aria-hidden="true"
+                  />
+                  <h3 className="font-medium text-ink">{topic.title}</h3>
+                  <StatusBadge tone={topic.isActive ? 'concluido' : 'pendente'} label={topic.isActive ? 'Ativo' : 'Inativo'} />
                 </button>
-                <button
-                  type="button"
-                  title={topic.isActive ? 'Desativar tópico' : 'Ativar tópico'}
-                  onClick={() => toggleTopicMutation.mutate(topic)}
-                  className="rounded p-1.5 text-ink-faint hover:bg-paper hover:text-ink"
-                >
-                  {topic.isActive ? <PowerOff className="h-4 w-4" aria-hidden="true" /> : <Power className="h-4 w-4" aria-hidden="true" />}
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <Button variant="ghost" size="sm" onClick={() => setIndicatorModal({ type: 'create', topicId: topic.id })}>
+                    <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                    Indicador
+                  </Button>
+                  <button
+                    type="button"
+                    title="Editar tópico"
+                    onClick={() => setTopicModal({ type: 'edit', topic })}
+                    className="rounded p-1.5 text-ink-faint hover:bg-paper hover:text-ink"
+                  >
+                    <PenSquare className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    title={topic.isActive ? 'Desativar tópico' : 'Ativar tópico'}
+                    onClick={() => toggleTopicMutation.mutate(topic)}
+                    className="rounded p-1.5 text-ink-faint hover:bg-paper hover:text-ink"
+                  >
+                    {topic.isActive ? <PowerOff className="h-4 w-4" aria-hidden="true" /> : <Power className="h-4 w-4" aria-hidden="true" />}
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {(topic.indicators ?? []).length === 0 ? (
-              <p className="mt-3 text-sm text-ink-faint">Nenhum indicador neste tópico.</p>
-            ) : (
-              <Table className="mt-4">
-                <THead>
-                  <TR>
-                    <TH>Indicador</TH>
-                    <TH>Chaves</TH>
-                    <TH>Fórmula</TH>
-                    <TH>Meta</TH>
-                    <TH>Status</TH>
-                    <TH>Ações</TH>
-                  </TR>
-                </THead>
-                <TBody>
-                  {[...(topic.indicators ?? [])]
-                    .sort((a, b) => a.order - b.order)
-                    .map((indicator) => (
-                      <TR key={indicator.id}>
-                        <TD className="max-w-xs">
-                          <p className="font-medium text-ink">{indicator.title}</p>
-                          {indicator.isResidentState && <p className="text-xs text-ink-faint">Estado residente</p>}
-                        </TD>
-                        <TD className="font-mono text-xs text-ink-muted">{indicator.variableKeys.join(', ')}</TD>
-                        <TD className="font-mono text-xs text-ink-muted">{indicator.formulaExpression}</TD>
-                        <TD className="data-figure text-sm">
-                          {GOAL_OPERATOR_SYMBOL[indicator.goalOperator]} {formatNumber(indicator.goalValue)}
-                        </TD>
-                        <TD>
-                          <StatusBadge tone={indicator.isActive ? 'concluido' : 'pendente'} label={indicator.isActive ? 'Ativo' : 'Inativo'} />
-                        </TD>
-                        <TD>
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              type="button"
-                              title="Editar indicador"
-                              onClick={() => setIndicatorModal({ type: 'edit', topicId: topic.id, indicator })}
-                              className="rounded p-1.5 text-ink-faint hover:bg-paper hover:text-ink"
-                            >
-                              <PenSquare className="h-4 w-4" aria-hidden="true" />
-                            </button>
-                            <button
-                              type="button"
-                              title={indicator.isActive ? 'Desativar indicador' : 'Ativar indicador'}
-                              onClick={() => toggleIndicatorMutation.mutate(indicator)}
-                              className="rounded p-1.5 text-ink-faint hover:bg-paper hover:text-ink"
-                            >
-                              {indicator.isActive ? (
-                                <PowerOff className="h-4 w-4" aria-hidden="true" />
-                              ) : (
-                                <Power className="h-4 w-4" aria-hidden="true" />
-                              )}
-                            </button>
-                          </div>
-                        </TD>
-                      </TR>
-                    ))}
-                </TBody>
-              </Table>
-            )}
-          </div>
-        ))}
+              {isOpen && (
+                <div className="px-5 pb-5">
+                  {(topic.indicators ?? []).length === 0 ? (
+                    <p className="text-sm text-ink-faint">Nenhum indicador neste tópico.</p>
+                  ) : (
+                    <Table>
+                      <THead>
+                        <TR>
+                          <TH>Indicador</TH>
+                          <TH>Chaves</TH>
+                          <TH>Fórmula</TH>
+                          <TH>Meta</TH>
+                          <TH>Status</TH>
+                          <TH>Ações</TH>
+                        </TR>
+                      </THead>
+                      <TBody>
+                        {[...(topic.indicators ?? [])]
+                          .sort((a, b) => a.order - b.order)
+                          .map((indicator) => (
+                            <TR key={indicator.id}>
+                              <TD className="max-w-xs">
+                                <p className="font-medium text-ink">{indicator.title}</p>
+                                {indicator.isResidentState && <p className="text-xs text-ink-faint">Estado residente</p>}
+                              </TD>
+                              <TD className="font-mono text-xs text-ink-muted">{indicator.variableKeys.join(', ')}</TD>
+                              <TD className="font-mono text-xs text-ink-muted">{indicator.formulaExpression}</TD>
+                              <TD className="data-figure text-sm">
+                                {GOAL_OPERATOR_SYMBOL[indicator.goalOperator]} {formatNumber(indicator.goalValue)}
+                              </TD>
+                              <TD>
+                                <StatusBadge
+                                  tone={indicator.isActive ? 'concluido' : 'pendente'}
+                                  label={indicator.isActive ? 'Ativo' : 'Inativo'}
+                                />
+                              </TD>
+                              <TD>
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    type="button"
+                                    title="Editar indicador"
+                                    onClick={() => setIndicatorModal({ type: 'edit', topicId: topic.id, indicator })}
+                                    className="rounded p-1.5 text-ink-faint hover:bg-paper hover:text-ink"
+                                  >
+                                    <PenSquare className="h-4 w-4" aria-hidden="true" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    title={indicator.isActive ? 'Desativar indicador' : 'Ativar indicador'}
+                                    onClick={() => toggleIndicatorMutation.mutate(indicator)}
+                                    className="rounded p-1.5 text-ink-faint hover:bg-paper hover:text-ink"
+                                  >
+                                    {indicator.isActive ? (
+                                      <PowerOff className="h-4 w-4" aria-hidden="true" />
+                                    ) : (
+                                      <Power className="h-4 w-4" aria-hidden="true" />
+                                    )}
+                                  </button>
+                                </div>
+                              </TD>
+                            </TR>
+                          ))}
+                      </TBody>
+                    </Table>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
 
       <TopicFormModal
         isOpen={topicModal?.type === 'create'}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Target } from 'lucide-react';
 import { distributeIndicatorScores, getIndicatorScores, updateIndicatorScores } from '../../../api/forms';
 import { Button, Spinner, useToast } from '../../ui';
 import { cn } from '../../../lib/cn';
@@ -49,7 +50,11 @@ export function IndicatorScorePanel({ templateId }: Props) {
   });
 
   if (isLoading) {
-    return <Spinner label="Carregando pontuação..." />;
+    return (
+      <div className="rounded-lg border-2 border-accent/30 bg-accent-50 p-5 shadow-panel">
+        <Spinner label="Carregando pontuação..." />
+      </div>
+    );
   }
   if (!summary || summary.items.length === 0) {
     return null;
@@ -71,20 +76,37 @@ export function IndicatorScorePanel({ templateId }: Props) {
   }
 
   return (
-    <div className="rounded-lg border border-border bg-paper-raised p-5 shadow-panel">
-      <div className="flex items-center justify-between">
-        <h3 className="font-medium text-ink">Pontuação dos indicadores</h3>
+    <div className="rounded-lg border-2 border-accent/30 bg-accent-50 p-5 shadow-panel">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <span
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-accent-ink"
+            aria-hidden="true"
+          >
+            <Target className="h-4 w-4" strokeWidth={2} />
+          </span>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-accent-700">
+              Pontuação por relatório
+            </p>
+            <h3 className="font-display text-base font-semibold text-ink">Peso dos indicadores</h3>
+          </div>
+        </div>
         <span
           className={cn(
-            'rounded px-2 py-0.5 text-xs font-semibold data-figure',
+            'shrink-0 rounded px-2.5 py-1 text-xs font-semibold data-figure',
             isBalanced ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700',
           )}
         >
           Soma: {sum.toFixed(2)} / {SCORE_TARGET}
         </span>
       </div>
+      <p className="mt-2 text-xs text-ink-muted">
+        Cada indicador soma este peso à nota do relatório quando sua meta é batida e aprovada. A soma dos pesos
+        ativos deve totalizar {SCORE_TARGET}.
+      </p>
 
-      <div className="mt-4 flex flex-col gap-2">
+      <div className="mt-4 flex flex-col gap-2 rounded-md bg-paper-raised p-3">
         {summary.items.map((item) => (
           <div key={item.id} className="flex items-center justify-between gap-3 text-sm">
             <span className="flex-1 truncate text-ink">{item.title}</span>

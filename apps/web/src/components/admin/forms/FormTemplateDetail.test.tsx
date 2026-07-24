@@ -90,4 +90,20 @@ describe('FormTemplateDetail', () => {
     fireEvent.click(screen.getByRole('button', { name: /Indicador/ }));
     expect(screen.getByText('Novo indicador')).toBeInTheDocument();
   });
+
+  it('collapses and expands a topic when its header is clicked', () => {
+    renderWithProviders(<FormTemplateDetail template={templateWithTopics} />);
+
+    const topicHeader = screen.getByRole('button', { name: /Infraestrutura/ });
+    expect(topicHeader).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('Disponibilidade')).toBeInTheDocument();
+
+    fireEvent.click(topicHeader);
+    expect(topicHeader).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('Disponibilidade')).not.toBeInTheDocument();
+
+    fireEvent.click(topicHeader);
+    expect(topicHeader).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('Disponibilidade')).toBeInTheDocument();
+  });
 });

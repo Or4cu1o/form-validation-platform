@@ -1,4 +1,4 @@
-import type { AuthenticatedUser, ReportInstance, Unit } from '../types/api';
+import type { AuthenticatedUser, ReportInstance, ReportInstanceOverview, Unit } from '../types/api';
 
 export function makeUser(overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser {
   return {
@@ -53,6 +53,20 @@ export function makeReportInstance(overrides: Partial<ReportInstance> = {}): Rep
     updatedAt: '2026-03-01T00:00:00.000Z',
     unit: makeUnit(),
     indicatorResponses: [],
+    ...overrides,
+  };
+}
+
+export function makeReportInstanceOverview(overrides: Partial<ReportInstanceOverview> = {}): ReportInstanceOverview {
+  return {
+    id: 'report-1',
+    unitId: 'unit-1',
+    referenceMonth: '2026-03-01',
+    status: 'PENDENTE',
+    totalScore: null,
+    isElaborationOnTime: null,
+    isReviewOnTime: null,
+    unit: { id: 'unit-1', sigla: 'TI', nome: 'Tecnologia da Informação' },
     ...overrides,
   };
 }

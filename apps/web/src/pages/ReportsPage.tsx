@@ -2,9 +2,12 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../components/layout/PageHeader';
+import { ScoreTrendChart } from '../components/reports/ScoreTrendChart';
 import { useAuth } from '../context/AuthContext';
 import { listReportInstances, startCurrentReportInstance } from '../api/reports';
-import { formatDateTime, formatReferenceMonth } from '../lib/format';
+import { formatDateTime, formatNumber, formatReferenceMonth } from '../lib/format';
+import { getRelevantDeadline } from '../lib/report-deadline';
+import { buildLastSixMonthsScoreTrend } from '../lib/score-trend';
 import { REPORT_STATUS_LABEL, REPORT_STATUS_TONE } from '../lib/status';
 import { Button, EmptyState, Select, Spinner, StatusBadge, Table, TBody, TD, TH, THead, TR, useToast } from '../components/ui';
 import type { ReportStatus } from '../types/api';
@@ -57,6 +60,8 @@ export function ReportsPage() {
     return reports.some((report) => report.referenceMonth.startsWith(currentMonthStr));
   }, [reports]);
 
+  const scoreTrend = useMemo(() => buildLastSixMonthsScoreTrend(reports), [reports]);
+
   return (
     <>
       <PageHeader
@@ -66,6 +71,15 @@ export function ReportsPage() {
       />
 
       <div className="flex flex-col gap-6 p-8">
+        {!isLoading && !isError && (
+          <div className="rounded-lg border border-border bg-paper-raised p-5 shadow-panel">
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-faint">
+              Desempenho — últimos 6 meses
+            </p>
+            <ScoreTrendChart points={scoreTrend} />
+          </div>
+        )}
+
         {actionableReport && (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded border-l-4 border-accent bg-accent-50 px-5 py-4 shadow-xs">
             <div>
@@ -132,17 +146,28 @@ export function ReportsPage() {
               <TR>
                 <TH>Período</TH>
                 <TH>Status</TH>
+                <TH>Prazo (SLA)</TH>
+                <TH>Nota</TH>
                 <TH>Enviado para revisão em</TH>
                 <TH>Enviado para aprovação em</TH>
                 <TH>Ações</TH>
               </TR>
             </THead>
             <TBody>
-              {reports.map((report) => (
+              {reports.map((report) => {
+                const deadline = getRelevantDeadline(report);
+                return (
                 <TR key={report.id}>
                   <TD className="data-figure">{formatReferenceMonth(report.referenceMonth)}</TD>
                   <TD>
                     <StatusBadge tone={REPORT_STATUS_TONE[report.status]} label={REPORT_STATUS_LABEL[report.status]} />
+                  </TD>
+                  <TD>
+                    <p className="text-xs text-ink-faint">{deadline.label}</p>
+                    <p className="data-figure text-sm">{deadline.value}</p>
+                  </TD>
+                  <TD className="data-figure text-sm">
+                    {report.totalScore !== null ? `${formatNumber(report.totalScore)} / 10` : '—'}
                   </TD>
                   <TD className="data-figure text-sm">{formatDateTime(report.submittedForReviewAt)}</TD>
                   <TD className="data-figure text-sm">{formatDateTime(report.submittedForApprovalAt)}</TD>
@@ -162,7 +187,8 @@ export function ReportsPage() {
                     )}
                   </TD>
                 </TR>
-              ))}
+                );
+              })}
             </TBody>
           </Table>
         )}

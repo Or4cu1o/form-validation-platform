@@ -54,4 +54,25 @@ describe('ReportsPage', () => {
 
     expect(await screen.findByText('Nenhum relatório encontrado')).toBeInTheDocument();
   });
+
+  it('shows the SLA deadline and score columns for each report', async () => {
+    vi.mocked(AuthContextModule.useAuth).mockReturnValue({ user: makeUser(), isLoading: false, login: vi.fn(), logout: vi.fn() });
+    vi.mocked(reportsApi.listReportInstances).mockResolvedValueOnce([
+      makeReportInstance({ status: 'CONCLUIDO', totalScore: '8', concludedAt: '2026-03-05T00:00:00.000Z' }),
+    ]);
+
+    renderReports();
+
+    expect(await screen.findByText('Concluído em')).toBeInTheDocument();
+    expect(screen.getByText('8 / 10')).toBeInTheDocument();
+  });
+
+  it('shows the 6-month score trend chart above the report list', async () => {
+    vi.mocked(AuthContextModule.useAuth).mockReturnValue({ user: makeUser(), isLoading: false, login: vi.fn(), logout: vi.fn() });
+    vi.mocked(reportsApi.listReportInstances).mockResolvedValueOnce([]);
+
+    renderReports();
+
+    expect(await screen.findByText('Desempenho — últimos 6 meses')).toBeInTheDocument();
+  });
 });

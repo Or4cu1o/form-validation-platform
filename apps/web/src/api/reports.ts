@@ -1,5 +1,5 @@
 import { apiGet, apiSend, buildQueryString } from '../lib/api-client';
-import type { ReportInstance, ReportStatus } from '../types/api';
+import type { ReportInstance, ReportInstanceOverview, ReportStatus } from '../types/api';
 
 export interface ListReportsParams {
   unitId?: string;
@@ -13,6 +13,10 @@ export interface ListReportsParams {
 
 export function listReportInstances(params: ListReportsParams): Promise<ReportInstance[]> {
   return apiGet<ReportInstance[]>(`/report-instances${buildQueryString(params)}`);
+}
+
+export function getReportInstancesOverview(params: ListReportsParams = {}): Promise<ReportInstanceOverview[]> {
+  return apiGet<ReportInstanceOverview[]>(`/report-instances/overview${buildQueryString(params)}`);
 }
 
 export function getReportInstance(id: string): Promise<ReportInstance> {

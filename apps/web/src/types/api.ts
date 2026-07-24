@@ -198,6 +198,17 @@ export interface SystemSetting {
   updatedAt: string;
 }
 
+export interface ReportInstanceOverview {
+  id: string;
+  unitId: string;
+  referenceMonth: string;
+  status: ReportStatus;
+  totalScore: string | null;
+  isElaborationOnTime: boolean | null;
+  isReviewOnTime: boolean | null;
+  unit: UnitSummary;
+}
+
 export type UpdatePlatformSettingsInput = Partial<
   Pick<
     SystemSetting,

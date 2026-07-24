@@ -15,6 +15,13 @@ export class ReportInstancesController {
     return this.reportInstancesService.findAllForUser(user, query);
   }
 
+  // Rota fixa "overview" precisa vir antes de ":id" para nao ser capturada
+  // pelo parametro dinamico.
+  @Get('overview')
+  findOverview(@Query() query: ListReportInstancesQueryDto) {
+    return this.reportInstancesService.findOverviewForAllUnits(query);
+  }
+
   @Roles(RoleName.ELABORADOR)
   @Post('start-current')
   startCurrent(@CurrentUser() user: AuthenticatedUser) {

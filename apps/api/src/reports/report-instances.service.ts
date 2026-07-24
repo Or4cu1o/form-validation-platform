@@ -71,6 +71,42 @@ export class ReportInstancesService {
     });
   }
 
+  // Painel Central: visao geral, somente leitura, de TODAS as unidades para
+  // qualquer papel autenticado (deliberadamente aberta — informativa e sem
+  // acesso ao detalhe do relatorio, que continua protegido por
+  // findOneForUser/assertReadAccess). Nao inclui indicatorResponses.
+  async findOverviewForAllUnits(query: ListReportInstancesQueryDto = {}) {
+    const { unitId, status, referenceMonthFrom, referenceMonthTo, search, sortBy, sortOrder } = query;
+    const where: Prisma.ReportInstanceWhereInput = {
+      ...(unitId && { unitId }),
+      ...(status && { status }),
+      ...((referenceMonthFrom || referenceMonthTo) && {
+        referenceMonth: {
+          ...(referenceMonthFrom && { gte: new Date(referenceMonthFrom) }),
+          ...(referenceMonthTo && { lte: new Date(referenceMonthTo) }),
+        },
+      }),
+      ...(search && {
+        unit: { OR: [{ sigla: { contains: search, mode: 'insensitive' } }, { nome: { contains: search, mode: 'insensitive' } }] },
+      }),
+    };
+
+    return this.prisma.reportInstance.findMany({
+      where,
+      select: {
+        id: true,
+        unitId: true,
+        referenceMonth: true,
+        status: true,
+        totalScore: true,
+        isElaborationOnTime: true,
+        isReviewOnTime: true,
+        unit: { select: { id: true, sigla: true, nome: true } },
+      },
+      orderBy: { [sortBy ?? 'referenceMonth']: sortOrder ?? 'desc' },
+    });
+  }
+
   async findOneForUser(id: string, user: AuthenticatedUser) {
     const report = await this.prisma.reportInstance.findUnique({
       where: { id },

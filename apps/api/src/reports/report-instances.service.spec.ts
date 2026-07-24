@@ -98,6 +98,38 @@ describe('ReportInstancesService', () => {
     });
   });
 
+  describe('findOverviewForAllUnits', () => {
+    test('does not scope by unit access — returns data from every unit regardless of caller', async () => {
+      findManyMock.mockResolvedValue([]);
+
+      await service.findOverviewForAllUnits();
+
+      expect(hasOrgWideReadAccessMock).not.toHaveBeenCalled();
+      expect(getAccessibleUnitIdsMock).not.toHaveBeenCalled();
+      const callArgs = findManyMock.mock.calls[0][0];
+      expect(callArgs.where.unitId).toBeUndefined();
+    });
+
+    test('does not select indicatorResponses (informational summary only)', async () => {
+      findManyMock.mockResolvedValue([]);
+
+      await service.findOverviewForAllUnits();
+
+      const callArgs = findManyMock.mock.calls[0][0];
+      expect(callArgs.select).not.toHaveProperty('indicatorResponses');
+      expect(callArgs.select).toMatchObject({ totalScore: true, status: true });
+    });
+
+    test('applies the unitId filter when provided', async () => {
+      findManyMock.mockResolvedValue([]);
+
+      await service.findOverviewForAllUnits({ unitId: 'unit-9' });
+
+      const callArgs = findManyMock.mock.calls[0][0];
+      expect(callArgs.where.unitId).toBe('unit-9');
+    });
+  });
+
   describe('findOneForUser', () => {
     test('throws NotFoundException when the report does not exist', async () => {
       findUniqueMock.mockResolvedValue(null);

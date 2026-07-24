@@ -6,6 +6,7 @@ import { ReportInstancesService } from './report-instances.service';
 describe('ReportInstancesController', () => {
   let controller: ReportInstancesController;
   let findAllForUserMock: jest.Mock;
+  let findOverviewForAllUnitsMock: jest.Mock;
   let findOneForUserMock: jest.Mock;
   let submitForReviewMock: jest.Mock;
   let submitForApprovalMock: jest.Mock;
@@ -23,12 +24,14 @@ describe('ReportInstancesController', () => {
 
   beforeEach(() => {
     findAllForUserMock = jest.fn().mockResolvedValue([]);
+    findOverviewForAllUnitsMock = jest.fn().mockResolvedValue([]);
     findOneForUserMock = jest.fn().mockResolvedValue({ id: 'report-1' });
     submitForReviewMock = jest.fn().mockResolvedValue({ id: 'report-1' });
     submitForApprovalMock = jest.fn().mockResolvedValue({ id: 'report-1' });
     startCurrentPeriodForElaboradorMock = jest.fn().mockResolvedValue({ id: 'report-new' });
     const reportInstancesService = {
       findAllForUser: findAllForUserMock,
+      findOverviewForAllUnits: findOverviewForAllUnitsMock,
       findOneForUser: findOneForUserMock,
       submitForReview: submitForReviewMock,
       submitForApproval: submitForApprovalMock,
@@ -43,6 +46,14 @@ describe('ReportInstancesController', () => {
     await controller.findAll(user, query);
 
     expect(findAllForUserMock).toHaveBeenCalledWith(user, query);
+  });
+
+  test('findOverview delegates to ReportInstancesService.findOverviewForAllUnits with the query', async () => {
+    const query = { status: undefined };
+
+    await controller.findOverview(query);
+
+    expect(findOverviewForAllUnitsMock).toHaveBeenCalledWith(query);
   });
 
   test('findOne delegates to ReportInstancesService.findOneForUser with id and user', async () => {

@@ -13,6 +13,7 @@
     "deploy": "node scripts/manage.js deploy",
     "deploy:seed": "node scripts/manage.js deploy:seed",
     "seed:proprietary": "node scripts/manage.js seed",
+    "seed:demo": "node scripts/manage.js seed:demo",
     "formops": "node scripts/manage.js",
     "dev:api": "npm run start:dev --workspace=apps/api",
     "dev:web": "npm run dev --workspace=apps/web",

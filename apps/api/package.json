@@ -12,6 +12,7 @@
     "seed": "ts-node prisma/seed.ts",
     "seed:n1": "ts-node prisma/seed-proprietary/seed-n1.ts",
     "seed:n3": "ts-node prisma/seed-proprietary/seed-n3.ts",
+    "seed:demo": "ts-node prisma/seed-demo.ts",
     "test": "jest",
     "test:cov": "jest --coverage",
     "test:e2e": "jest --config ./test/jest-e2e.json",

@@ -548,6 +548,35 @@ function commandSeed() {
   console.log(`${GREEN}======================================================================${RESET}\n`);
 }
 
+function commandSeedDemo() {
+  console.log(`${CYAN}=== Semeando Ambiente de Demonstração (5 Unidades / Jan-Jun 2026) ===${RESET}`);
+  console.log('Verificando conexão com o banco de dados PostgreSQL...');
+  try {
+    execSync('npx prisma migrate status --schema=apps/api/prisma/schema.prisma', { cwd: ROOT_DIR, stdio: 'ignore' });
+  } catch {
+    console.error(`${RED}Erro: O banco de dados PostgreSQL não está em execução ou não está aceitando conexões.${RESET}`);
+    console.log(`${YELLOW}Por favor, inicie a aplicação/banco executando 'npm start' antes de semear.${RESET}`);
+    process.exit(1);
+  }
+
+  run('npm run prisma:generate --workspace=apps/api', { ignoreError: true });
+  console.log('\n1/4 Garantindo Seed Core (Admin e Usuários Base)...');
+  run('npm run seed --workspace=apps/api');
+
+  console.log('\n2/4 Semeando Formulário Proprietário N1 (seed-n1.ts)...');
+  run('npm run seed:n1 --workspace=apps/api');
+
+  console.log('\n3/4 Semeando Formulário Proprietário N3 (seed-n3.ts)...');
+  run('npm run seed:n3 --workspace=apps/api');
+
+  console.log('\n4/4 Semeando Dados de Demonstração (5 Unidades Hospitalares / 6 Meses de Relatórios)...');
+  run('npm run seed:demo --workspace=apps/api');
+
+  console.log(`\n${GREEN}======================================================================${RESET}`);
+  console.log(`${GREEN}✓ DADOS DA DEMONSTRAÇÃO SEMEADOS COM SUCESSO!${RESET}`);
+  console.log(`${GREEN}======================================================================${RESET}\n`);
+}
+
 async function commandSummary() {
   console.log(`${CYAN}======================================================================${RESET}`);
   console.log(`${BOLD}      FormOps - Validação da Stack e Instruções de Gerenciamento      ${RESET}`);
@@ -632,6 +661,11 @@ async function main() {
       break;
     case 'seed':
       commandSeed();
+      break;
+    case 'seed:demo':
+    case 'seed-demo':
+    case 'seed_demo':
+      commandSeedDemo();
       break;
     default:
       await commandSummary();

@@ -34,3 +34,6 @@ gan-harness/
 
 # OS
 .DS_Store
+
+# Git worktrees usados para desenvolvimento isolado (superpowers:using-git-worktrees)
+.worktrees/

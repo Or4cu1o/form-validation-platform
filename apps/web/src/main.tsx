@@ -6,7 +6,7 @@ import { ToastProvider } from './components/ui';
 import { brand } from './config/brand';
 import './index.css';
 
-document.title = `${brand.departmentAcronym} — ${brand.departmentFullName}`;
+document.title = brand.systemName;
 
 const queryClient = new QueryClient({
   defaultOptions: {

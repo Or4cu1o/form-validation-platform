@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, FileJson, FileSpreadsheet } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowDown, ArrowUp, Eye, FileJson, FileSpreadsheet, FileText } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { getReportInstancesOverview } from '../api/reports';
 import { exportReportInstance } from '../api/export';
@@ -274,7 +275,7 @@ export function DashboardPage() {
                   <SortableHeader label="Status" column="status" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} />
                 </TH>
                 <TH>Nota</TH>
-                <TH className="text-right">Exportação</TH>
+                <TH className="text-right">Ações & Exportação</TH>
               </TR>
             </THead>
             <TBody>
@@ -293,6 +294,13 @@ export function DashboardPage() {
                   </TD>
                   <TD className="text-right">
                     <div className="flex items-center justify-end gap-1.5">
+                      <Link to={`/relatorios/${report.id}`}>
+                        <Button size="sm" variant="ghost" title="Visualizar relatório">
+                          <Eye className="mr-1 h-3.5 w-3.5 text-accent" />
+                          Visualizar
+                        </Button>
+                      </Link>
+
                       <Button
                         size="sm"
                         variant="secondary"
@@ -303,6 +311,7 @@ export function DashboardPage() {
                         <FileSpreadsheet className="mr-1 h-3.5 w-3.5 text-accent" />
                         CSV
                       </Button>
+
                       <Button
                         size="sm"
                         variant="ghost"
@@ -312,6 +321,16 @@ export function DashboardPage() {
                       >
                         <FileJson className="mr-1 h-3.5 w-3.5 text-ink-muted" />
                         JSON
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => showToast('Exportação em PDF será disponibilizada em breve.', 'info')}
+                        title="Exportar dados em formato PDF"
+                      >
+                        <FileText className="mr-1 h-3.5 w-3.5 text-rose-500" />
+                        PDF
                       </Button>
                     </div>
                   </TD>

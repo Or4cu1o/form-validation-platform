@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { ScoreTrendChart } from '../components/reports/ScoreTrendChart';
 import { useAuth } from '../context/AuthContext';
@@ -68,6 +69,17 @@ export function ReportsPage() {
         eyebrow="Meu fluxo de trabalho"
         title="Elaboração e Revisão"
         description="Relatórios da sua unidade em aberto para lançamento de dados e revisão colaborativa."
+        actions={
+          user?.role === 'ELABORADOR' || user?.role === 'ADMINISTRADOR' ? (
+            <Button
+              isLoading={startMutation.isPending}
+              onClick={() => startMutation.mutate()}
+            >
+              <Plus className="mr-1.5 h-4 w-4" />
+              Iniciar elaboração
+            </Button>
+          ) : undefined
+        }
       />
 
       <div className="flex flex-col gap-6 p-8">
@@ -113,7 +125,8 @@ export function ReportsPage() {
               </p>
             </div>
             <Button isLoading={startMutation.isPending} onClick={() => startMutation.mutate()}>
-              Criar relatório do mês atual
+              <Plus className="mr-1.5 h-4 w-4" />
+              Iniciar elaboração do mês atual
             </Button>
           </div>
         )}
@@ -174,7 +187,7 @@ export function ReportsPage() {
                   <TD>
                     {report.status === 'PENDENTE' && user?.role === 'ELABORADOR' ? (
                       <Link to={`/relatorios/${report.id}`}>
-                        <Button size="sm">Elaborar</Button>
+                        <Button size="sm">Iniciar elaboração</Button>
                       </Link>
                     ) : report.status === 'EM_REVISAO' && user?.role === 'REVISOR' ? (
                       <Link to={`/relatorios/${report.id}`}>

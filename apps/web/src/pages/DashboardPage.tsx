@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp } from 'lucide-react';
+import { ArrowDown, ArrowUp, FileJson, FileSpreadsheet } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { getReportInstancesOverview } from '../api/reports';
+import { exportReportInstance } from '../api/export';
 import { formatNumber, formatReferenceMonth } from '../lib/format';
 import { REPORT_STATUS_LABEL, REPORT_STATUS_TONE } from '../lib/status';
 import { cn } from '../lib/cn';
-import { Input, Select, Spinner, StatusBadge, EmptyState, Table, TBody, TD, TH, THead, TR } from '../components/ui';
+import { Button, EmptyState, Input, Select, Spinner, StatusBadge, Table, TBody, TD, TH, THead, TR, useToast } from '../components/ui';
 import type { ReportInstanceOverview, ReportStatus, UnitSummary } from '../types/api';
 
 const SEARCH_DEBOUNCE_MS = 350;
@@ -97,6 +98,7 @@ function ScoreCell({ totalScore }: { totalScore: string | null }) {
 }
 
 export function DashboardPage() {
+  const { showToast } = useToast();
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<ReportStatus | ''>('');
@@ -105,6 +107,7 @@ export function DashboardPage() {
   const [referenceMonthTo, setReferenceMonthTo] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('referenceMonth');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [exportingId, setExportingId] = useState<string | null>(null);
 
   useEffect(() => {
     const timeout = setTimeout(() => setSearch(searchInput.trim()), SEARCH_DEBOUNCE_MS);
@@ -151,12 +154,33 @@ export function DashboardPage() {
     }
   }
 
+  async function handleExport(id: string, format: 'csv' | 'json') {
+    const exportKey = `${id}-${format}`;
+    setExportingId(exportKey);
+    try {
+      const { blob, filename } = await exportReportInstance(id, format);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename || `relatorio-${id}.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      showToast(`Relatório exportado em ${format.toUpperCase()} com sucesso!`, 'success');
+    } catch {
+      showToast('Não foi possível exportar o relatório.', 'error');
+    } finally {
+      setExportingId(null);
+    }
+  }
+
   return (
     <>
       <PageHeader
-        eyebrow="Visão geral · somente leitura"
+        eyebrow="Visão geral"
         title="Painel Central"
-        description="Panorama informativo de todas as unidades: status e nota de cada relatório. Para elaborar, revisar ou exportar, use Elaboração e Revisão."
+        description="Panorama informativo de todas as unidades: acompanhamento de status, notas operacionais e exportação oficial dos relatórios."
       />
 
       <StatusOverview reports={reports} />
@@ -250,6 +274,7 @@ export function DashboardPage() {
                   <SortableHeader label="Status" column="status" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} />
                 </TH>
                 <TH>Nota</TH>
+                <TH className="text-right">Exportação</TH>
               </TR>
             </THead>
             <TBody>
@@ -265,6 +290,30 @@ export function DashboardPage() {
                   </TD>
                   <TD>
                     <ScoreCell totalScore={report.totalScore} />
+                  </TD>
+                  <TD className="text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        isLoading={exportingId === `${report.id}-csv`}
+                        onClick={() => handleExport(report.id, 'csv')}
+                        title="Exportar dados em formato CSV"
+                      >
+                        <FileSpreadsheet className="mr-1 h-3.5 w-3.5 text-accent" />
+                        CSV
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        isLoading={exportingId === `${report.id}-json`}
+                        onClick={() => handleExport(report.id, 'json')}
+                        title="Exportar dados em formato JSON"
+                      >
+                        <FileJson className="mr-1 h-3.5 w-3.5 text-ink-muted" />
+                        JSON
+                      </Button>
+                    </div>
                   </TD>
                 </TR>
               ))}
